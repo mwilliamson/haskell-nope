@@ -1,0 +1,23 @@
+Name:           Nope
+Version:        0.1.0
+License:        BSD2
+Cabal-Version:  >= 1.20.0.2
+Build-Type:     Simple
+
+library
+    hs-source-dirs: src
+    exposed-modules:
+        Nope
+    build-depends:
+        base
+
+Test-Suite nope-tests
+    type:       exitcode-stdio-1.0
+    hs-source-dirs: tests
+    main-is:    TestSuite.hs
+    build-depends:
+        base,
+        Nope,
+        tasty >= 0.10 && < 0.11,
+        tasty-hunit >= 0.9.2 && < 0.10,
+        HUnit >= 1.2.5.2 && < 1.3
