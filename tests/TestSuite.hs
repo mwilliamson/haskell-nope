@@ -3,23 +3,13 @@ import Test.Tasty.HUnit
 
 import Nope
 
+import Nope.Tests.CousCous.InterpreterTests
+import Nope.Tests.ExecutionTests
+
 main = defaultMain tests
 
 tests :: TestTree
 tests = testGroup "Tests" [
-    programTestCase "Printing integer prints that integer to stdout"
-        "print(42)"
-        (Result (Stdout "42\n"))
+    interpreterTestSuite,
+    executionTestSuite
     ]
-
-
-programTestCase :: [Char] -> [Char] -> Result -> TestTree
-programTestCase testName programText expectedResult =
-    testCase testName $
-        let result = runProgram programText
-        in assertResult expectedResult result
-
-
-assertResult :: Result -> Result -> Assertion
-assertResult (Result (Stdout expectedStdout)) (Result (Stdout actualStdout)) =
-    expectedStdout @=? actualStdout

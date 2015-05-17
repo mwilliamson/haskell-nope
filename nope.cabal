@@ -7,7 +7,9 @@ Build-Type:     Simple
 library
     hs-source-dirs: src
     exposed-modules:
-        Nope
+        Nope,
+        Nope.CousCous,
+        Nope.CousCous.Interpreter
     build-depends:
         base
 
