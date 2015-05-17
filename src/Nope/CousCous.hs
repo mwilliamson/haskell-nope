@@ -1,17 +1,24 @@
 module Nope.CousCous where
 
 expression_statement :: ExpressionNode -> StatementNode
-expression_statement = undefined
+expression_statement expression = ExpressionStatement expression
 
 call :: ExpressionNode -> [ExpressionNode] -> ExpressionNode
-call = undefined
+call func args = Call func args
 
 builtin :: [Char] -> ExpressionNode
-builtin = undefined
+builtin name = Builtin name
 
 literal :: Integer -> ExpressionNode
-literal = undefined
+literal value = Literal value
 
-data ExpressionNode = ExpressionNode
+data ExpressionNode =
+    Literal Integer |
+    Builtin [Char] |
+    Call ExpressionNode [ExpressionNode]
+    
+    
 
-data StatementNode = StatementNode
+data StatementNode = ExpressionStatement ExpressionNode
+
+data Value = Unit | IntegerValue Integer | Print
