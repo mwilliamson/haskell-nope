@@ -7,7 +7,7 @@ main = defaultMain tests
 
 tests :: TestTree
 tests = testGroup "Tests" [
-    programTestCase "Printing integer prints that number to stdout"
+    programTestCase "Printing integer prints that integer to stdout"
         "print(42)"
         (Result (Stdout "42\n"))
     ]
