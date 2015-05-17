@@ -29,9 +29,11 @@ eval (CC.Call func args) state =
     in call funcValue argValues state3
 
 call :: CC.Value -> [CC.Value] -> State -> (CC.Value, State)
-call CC.Print [CC.IntegerValue value] (State (Stdout stdout)) =
-    (CC.Unit, State (Stdout (stdout ++ (show value) ++ "\n")))
+call CC.Print [CC.IntegerValue value] state =
+    (CC.Unit, write ((show value) ++ "\n") state)
 
+write :: [Char] -> State -> State
+write value (State (Stdout stdout)) = State (Stdout (stdout ++ value))
 
 evalAll :: [CC.ExpressionNode] -> State -> ([CC.Value], State)
 evalAll [] state = ([], state)
