@@ -35,9 +35,8 @@ call CC.Print [CC.IntegerValue value] = do
     return CC.Unit
 
 write :: [Char] -> State InterpreterState ()
-write value = do
-    (InterpreterState (Stdout stdout)) <- get
-    put (InterpreterState (Stdout (stdout ++ value)))
+write value = modify $ \(InterpreterState (Stdout stdout)) ->
+    (InterpreterState (Stdout (stdout ++ value)))
 
 evalAll :: [CC.ExpressionNode] -> State InterpreterState [CC.Value]
 evalAll [] = return []
