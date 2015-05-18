@@ -6,7 +6,6 @@ import qualified Nope.CousCous as CC
 import Nope
 
 
-
 data InterpreterState = InterpreterState Stdout
 
 initialState = InterpreterState (Stdout "")
@@ -18,25 +17,31 @@ run statement =
     Result stdout
 
 exec :: CC.StatementNode -> State InterpreterState ()
-exec (CC.ExpressionStatement expression) =
-    eval expression >>= \_ -> return ()
-
+exec (CC.ExpressionStatement expression) = do
+    eval expression
+    return ()
 
 eval :: CC.ExpressionNode -> State InterpreterState CC.Value
 eval (CC.Literal value) = return (CC.IntegerValue value)
 eval (CC.Builtin "print") = return CC.Print
-eval (CC.Call func args) =
-    eval func >>= \funcValue -> evalAll args >>= \argValues -> call funcValue argValues
+eval (CC.Call func args) = do
+    funcValue <- eval func
+    argValues <- evalAll args
+    call funcValue argValues
 
 call :: CC.Value -> [CC.Value] -> State InterpreterState CC.Value
-call CC.Print [CC.IntegerValue value] =
-    write ((show value) ++ "\n") >>= \_ -> return CC.Unit
+call CC.Print [CC.IntegerValue value] = do
+    write ((show value) ++ "\n")
+    return CC.Unit
 
 write :: [Char] -> State InterpreterState ()
-write value =
-    get >>= \(InterpreterState (Stdout stdout)) -> return (InterpreterState (Stdout (stdout ++ value))) >>= put
+write value = do
+    (InterpreterState (Stdout stdout)) <- get
+    put (InterpreterState (Stdout (stdout ++ value)))
 
 evalAll :: [CC.ExpressionNode] -> State InterpreterState [CC.Value]
 evalAll [] = return []
-evalAll (e:es) =
-    eval e >>= \v -> evalAll es >>= \vs -> return (v:vs)
+evalAll (e:es) = do
+    v <- eval e
+    vs <- evalAll es
+    return (v:vs)
