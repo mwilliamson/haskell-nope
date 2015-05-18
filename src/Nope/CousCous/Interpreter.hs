@@ -39,8 +39,4 @@ write value = modify $ \(InterpreterState (Stdout stdout)) ->
     (InterpreterState (Stdout (stdout ++ value)))
 
 evalAll :: [CC.ExpressionNode] -> State InterpreterState [CC.Value]
-evalAll [] = return []
-evalAll (e:es) = do
-    v <- eval e
-    vs <- evalAll es
-    return (v:vs)
+evalAll = mapM eval
