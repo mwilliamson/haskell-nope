@@ -11,7 +11,8 @@ library
         Nope.CousCous,
         Nope.CousCous.Interpreter
     build-depends:
-        base
+        base,
+        mtl
 
 Test-Suite nope-tests
     type:       exitcode-stdio-1.0

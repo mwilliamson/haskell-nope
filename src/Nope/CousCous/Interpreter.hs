@@ -1,43 +1,42 @@
 module Nope.CousCous.Interpreter where
 
+import Control.Monad.State
+
 import qualified Nope.CousCous as CC
 import Nope
 
 
-data State = State Stdout
 
-initialState = State (Stdout "")
+data InterpreterState = InterpreterState Stdout
+
+initialState = InterpreterState (Stdout "")
 
 
 run :: CC.StatementNode -> Result
 run statement =
-    let (State stdout) = exec statement initialState in
+    let (InterpreterState stdout) = execState (exec statement) initialState in
     Result stdout
 
-exec :: CC.StatementNode -> State -> State
-exec (CC.ExpressionStatement expression) state =
-    let (_, state2) = eval expression state in
-    state2
+exec :: CC.StatementNode -> State InterpreterState ()
+exec (CC.ExpressionStatement expression) =
+    eval expression >>= \_ -> return ()
 
 
-eval :: CC.ExpressionNode -> State -> (CC.Value, State)
-eval (CC.Literal value) state = (CC.IntegerValue value, state)
-eval (CC.Builtin "print") state = (CC.Print, state)
-eval (CC.Call func args) state =
-    let (funcValue, state2) = eval func state
-        (argValues, state3) = evalAll args state2
-    in call funcValue argValues state3
+eval :: CC.ExpressionNode -> State InterpreterState CC.Value
+eval (CC.Literal value) = return (CC.IntegerValue value)
+eval (CC.Builtin "print") = return CC.Print
+eval (CC.Call func args) =
+    eval func >>= \funcValue -> evalAll args >>= \argValues -> call funcValue argValues
 
-call :: CC.Value -> [CC.Value] -> State -> (CC.Value, State)
-call CC.Print [CC.IntegerValue value] state =
-    (CC.Unit, write ((show value) ++ "\n") state)
+call :: CC.Value -> [CC.Value] -> State InterpreterState CC.Value
+call CC.Print [CC.IntegerValue value] =
+    write ((show value) ++ "\n") >>= \_ -> return CC.Unit
 
-write :: [Char] -> State -> State
-write value (State (Stdout stdout)) = State (Stdout (stdout ++ value))
+write :: [Char] -> State InterpreterState ()
+write value =
+    get >>= \(InterpreterState (Stdout stdout)) -> return (InterpreterState (Stdout (stdout ++ value))) >>= put
 
-evalAll :: [CC.ExpressionNode] -> State -> ([CC.Value], State)
-evalAll [] state = ([], state)
-evalAll (e:es) state =
-    let (v, state2) = eval e state
-        (vs, state3) = evalAll es state2
-    in (v:vs, state3)
+evalAll :: [CC.ExpressionNode] -> State InterpreterState [CC.Value]
+evalAll [] = return []
+evalAll (e:es) =
+    eval e >>= \v -> evalAll es >>= \vs -> return (v:vs)
