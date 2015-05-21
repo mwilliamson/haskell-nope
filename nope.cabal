@@ -9,6 +9,8 @@ library
     exposed-modules:
         Nope,
         Nope.Desugaring,
+        Nope.Parsing,
+        Nope.Nodes,
         Nope.CousCous,
         Nope.CousCous.Interpreter
     build-depends:
