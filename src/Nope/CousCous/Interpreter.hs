@@ -3,18 +3,17 @@ module Nope.CousCous.Interpreter where
 import Control.Monad.State
 
 import qualified Nope.CousCous as CC
-import Nope
-
 
 data InterpreterState = InterpreterState Stdout
+data Stdout = Stdout String
 
 initialState = InterpreterState (Stdout "")
 
+stdout :: InterpreterState -> String
+stdout (InterpreterState (Stdout stdout)) = stdout
 
-run :: CC.StatementNode -> Result
-run statement =
-    let (InterpreterState stdout) = execState (exec statement) initialState in
-    Result stdout
+run :: CC.ModuleNode -> InterpreterState
+run (CC.ModuleNode statements) = execState (mapM exec statements) initialState
 
 exec :: CC.StatementNode -> State InterpreterState ()
 exec (CC.ExpressionStatement expression) = do

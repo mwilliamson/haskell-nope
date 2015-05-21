@@ -1,8 +1,16 @@
 module Nope where
 
-data Stdout = Stdout [Char]
+import Nope.Parsing
+import Nope.Desugaring
+import qualified Nope.CousCous.Interpreter as Interpreter
+
+data Stdout = Stdout String
 
 data Result = Result Stdout
 
-runProgram :: [Char] -> Result
-runProgram _ = Result (Stdout "42\n")
+runProgram :: String -> Result
+runProgram programText =
+    let nopeModuleNode = parse programText
+        cousCousModuleNode = desugar nopeModuleNode
+        finalState = Interpreter.run cousCousModuleNode
+    in Result (Stdout (Interpreter.stdout finalState))

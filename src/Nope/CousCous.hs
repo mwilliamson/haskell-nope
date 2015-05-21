@@ -17,7 +17,7 @@ data ExpressionNode =
     Builtin [Char] |
     Call ExpressionNode [ExpressionNode]
     
-    
+data ModuleNode = ModuleNode [StatementNode]    
 
 data StatementNode = ExpressionStatement ExpressionNode
 
