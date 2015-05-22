@@ -10,7 +10,7 @@ data Result = Result Stdout
 
 runProgram :: String -> Result
 runProgram programText =
-    let nopeModuleNode = parse programText
+    let (Right nopeModuleNode) = parse programText
         cousCousModuleNode = desugar nopeModuleNode
         finalState = Interpreter.run cousCousModuleNode
     in Result (Stdout (Interpreter.stdout finalState))
