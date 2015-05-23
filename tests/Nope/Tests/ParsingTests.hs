@@ -1,5 +1,7 @@
 module Nope.Tests.ParsingTests where
 
+import Data.List (isPrefixOf)
+
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -16,12 +18,19 @@ parsingTestSuite = testGroup "ParsingTests" [
         
     parsingTestCase "Unexpected token"
         "print 42"
-        (Left (SyntaxError (SourcePoint AnonymousSource 0 6) "Unexpected token '42'"))
+        (Left (SyntaxError (SourcePoint AnonymousSource 0 6) "Unexpected token '42'")),
+        
+    parsingTestCase "Unexpected token"
+        "del x"
+        (Left (SyntaxError (SourcePoint AnonymousSource 0 0) "Unsupported node: delete statement"))
     ]
 
 
 parsingTestCase :: String -> String -> Result Nodes.Module -> TestTree
 parsingTestCase testName programText expectedResult =
-    let source = Source AnonymousSource programText
-        actualResult = parseModule source
-    in testCase testName $ expectedResult @=? actualResult
+    testCase testName $ expectedResult @=? (parseString programText)
+
+
+parseString :: String -> Result Nodes.Module
+parseString programText =
+    parseModule (Source AnonymousSource programText)
