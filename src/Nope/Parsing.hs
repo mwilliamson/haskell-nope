@@ -53,21 +53,28 @@ transformModule (Python.Module statements) = do
 
 transformStatement :: Python.StatementSpan -> Result Nodes.Statement
 transformStatement (Python.StmtExpr expression _) =
-    return $ Nodes.ExpressionStatement $ transformExpression expression
+    fmap Nodes.ExpressionStatement (transformExpression expression)
 -- TODO: error
 transformStatement _ = undefined
 
 
-transformExpression :: Python.ExprSpan -> Nodes.Expression
-transformExpression (Python.Int value _ _) = Nodes.Literal value
-transformExpression (Python.Call func args _) =
-    Nodes.Call (transformExpression func) (map transformArgument args)
-transformExpression (Python.Var (Python.Ident name _) _) = Nodes.Builtin name
+transformExpression :: Python.ExprSpan -> Result Nodes.Expression
+
+transformExpression (Python.Int value _ _) =
+    return $ Nodes.Literal value
+
+transformExpression (Python.Call func args _) = do
+    nopeFunc <- transformExpression func
+    nopeArgs <- mapM transformArgument args
+    return $ Nodes.Call nopeFunc nopeArgs
+    
+transformExpression (Python.Var (Python.Ident name _) _) =
+    return $ Nodes.Builtin name
 -- TODO: error
 transformExpression _ = undefined
 
 
-transformArgument :: Python.ArgumentSpan -> Nodes.Expression
+transformArgument :: Python.ArgumentSpan -> Result Nodes.Expression
 transformArgument (Python.ArgExpr expression _) = transformExpression expression
 -- TODO: error
 transformArgument _ = undefined
