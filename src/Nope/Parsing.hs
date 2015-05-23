@@ -2,7 +2,7 @@ module Nope.Parsing where
 
 import qualified Language.Python.Common.AST as Python
 import Language.Python.Version3.Parser
-import Language.Python.Common.ParseError (ParseError(UnexpectedToken, UnexpectedChar))
+import Language.Python.Common.ParseError (ParseError(UnexpectedToken, UnexpectedChar, StrError))
 import Language.Python.Common.Token (Token, token_span, tokenString)
 import Language.Python.Common.SrcLocation (SrcSpan, startRow, startCol, getSpan)
 
@@ -29,9 +29,9 @@ toResult sourceDescription (Left (UnexpectedChar char location)) =
     let location' = spanToLocation sourceDescription (getSpan location)
         message = "Unexpected character '" ++ [char] ++ "'"
     in Left (SyntaxError location' message)
--- TODO:
-toResult _ _ = undefined
 
+toResult sourceDescription (Left (StrError message)) =
+    Left (SyntaxError (SourceFile sourceDescription) message)
 
 extractLocation :: SourceDescription -> Token -> SourceLocation
 extractLocation sourceDescription token =
@@ -42,7 +42,7 @@ spanToLocation :: SourceDescription -> SrcSpan -> SourceLocation
 spanToLocation sourceDescription srcSpan =
     let rowIndex = (startRow srcSpan) - 1
         colIndex = (startCol srcSpan) - 1
-    in SourceLocation sourceDescription rowIndex colIndex
+    in SourcePoint sourceDescription rowIndex colIndex
 
 
 transformModule :: Python.ModuleSpan -> Nodes.Module
