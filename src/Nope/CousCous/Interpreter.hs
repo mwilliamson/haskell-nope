@@ -10,7 +10,7 @@ data Stdout = Stdout String deriving (Show, Eq)
 data Variables = Variables (Map.Map String CC.Value)
 
 initialState :: InterpreterState
-initialState = InterpreterState (Stdout "") (Variables Map.empty)
+initialState = InterpreterState (Stdout "") (Variables (Map.singleton "print" CC.Print))
 
 stdout :: InterpreterState -> String
 stdout (InterpreterState (Stdout output) _) = output

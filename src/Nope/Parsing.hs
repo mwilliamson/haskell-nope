@@ -53,6 +53,11 @@ parseModule (Source sourceDescription input) = do
         
         transformStatement (Python.StmtExpr expression _) =
             fmap Nodes.ExpressionStatement (transformExpression expression)
+        
+        transformStatement (Python.Assign targets value _) = do
+            nopeTargets <- mapM transformExpression targets
+            nopeValue <- transformExpression value
+            return $ Nodes.Assign nopeTargets nopeValue
 
         transformStatement statement =
             unsupportedNode (Python.stmt_annot statement) (describeStatement statement)
@@ -74,7 +79,8 @@ parseModule (Source sourceDescription input) = do
             return $ Nodes.Call nopeFunc nopeArgs
             
         transformExpression (Python.Var (Python.Ident name _) _) =
-            return $ Nodes.Builtin name
+            return $ Nodes.VariableReference name
+        
         -- TODO: error
         transformExpression _ = undefined
 
