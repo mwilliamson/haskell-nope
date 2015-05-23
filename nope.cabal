@@ -13,6 +13,7 @@ library
         Nope.Nodes,
         Nope.CousCous,
         Nope.CousCous.Interpreter
+    ghc-options: -Wall -Werror
     build-depends:
         base,
         mtl,
