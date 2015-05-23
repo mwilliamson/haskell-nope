@@ -9,6 +9,7 @@ library
     exposed-modules:
         Nope,
         Nope.Results,
+        Nope.Sources,
         Nope.Desugaring,
         Nope.Parsing,
         Nope.Nodes,

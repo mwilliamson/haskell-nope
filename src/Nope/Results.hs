@@ -1,6 +1,8 @@
 module Nope.Results where
 
+import Nope.Sources
+
 type Result a = Either NopeError a
 
-data NopeError = Error
+data NopeError = SyntaxError SourceLocation String
     deriving (Show, Eq)

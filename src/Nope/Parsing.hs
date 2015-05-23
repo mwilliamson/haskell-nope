@@ -3,20 +3,41 @@ module Nope.Parsing where
 import qualified Language.Python.Common.AST as Python
 import Language.Python.Version3.Parser
 import Language.Python.Common.ParseError
+import Language.Python.Common.Token (Token, token_span, tokenString)
+import Language.Python.Common.SrcLocation (SrcSpan, startRow, startCol)
 
 import Nope.Results
+import Nope.Sources
 import qualified Nope.Nodes as Nodes
 
-parse :: String -> Result Nodes.Module
-parse input = do
-    (moduleSpan, _) <- toResult $ parseModule input ""
+parse :: Source -> Result Nodes.Module
+parse (Source description input) = do
+    (moduleSpan, _) <- toResult description $ parseModule input (show description)
     return $ transformModule moduleSpan
 
 
-toResult :: Either ParseError a -> Result a
-toResult (Right x) = return x
--- TODO
-toResult (Left _) = undefined
+toResult :: SourceDescription -> Either ParseError a -> Result a
+
+toResult _ (Right x) = return x
+
+toResult sourceDescription (Left (UnexpectedToken token)) =
+    let location = extractLocation sourceDescription token
+        message = "Unexpected token '" ++ (tokenString token) ++ "'"
+    in Left (SyntaxError location message)
+-- TODO:
+toResult _ _ = undefined
+
+
+extractLocation :: SourceDescription -> Token -> SourceLocation
+extractLocation sourceDescription token =
+    spanToLocation sourceDescription (token_span token)
+
+
+spanToLocation :: SourceDescription -> SrcSpan -> SourceLocation
+spanToLocation sourceDescription srcSpan =
+    let rowIndex = (startRow srcSpan) - 1
+        colIndex = (startCol srcSpan) - 1
+    in SourceLocation sourceDescription rowIndex colIndex
 
 
 transformModule :: Python.ModuleSpan -> Nodes.Module
