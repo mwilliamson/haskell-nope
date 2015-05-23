@@ -7,6 +7,6 @@ import Nope.Results
 
 
 assertResult :: Result Stdout -> Result Stdout -> Assertion
-assertResult (Success (Stdout expectedStdout)) (Success (Stdout actualStdout)) =
+assertResult (Right (Stdout expectedStdout)) (Right (Stdout actualStdout)) =
     expectedStdout @=? actualStdout
 

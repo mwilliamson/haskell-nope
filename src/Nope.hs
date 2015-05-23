@@ -12,4 +12,4 @@ runProgram programText = do
     nopeModuleNode <- parse programText
     let cousCousModuleNode = desugar nopeModuleNode
         finalState = Interpreter.run cousCousModuleNode
-    Success $ Stdout (Interpreter.stdout finalState)
+    return $ Stdout (Interpreter.stdout finalState)

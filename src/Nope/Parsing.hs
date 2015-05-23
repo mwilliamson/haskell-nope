@@ -15,6 +15,7 @@ parse input = do
 
 toResult :: Either ParseError a -> Result a
 toResult (Right x) = return x
+-- TODO
 toResult (Left _) = undefined
 
 

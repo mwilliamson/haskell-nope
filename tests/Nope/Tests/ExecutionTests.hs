@@ -11,7 +11,7 @@ executionTestSuite :: TestTree
 executionTestSuite = testGroup "ExecutionTests" [
     programTestCase "Printing integer prints that integer to stdout"
         "print(42)"
-        (Success (Stdout "42\n"))
+        (Right (Stdout "42\n"))
     ]
 
 
