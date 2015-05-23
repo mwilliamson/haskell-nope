@@ -2,9 +2,9 @@ module Nope.Parsing where
 
 import qualified Language.Python.Common.AST as Python
 import Language.Python.Version3.Parser
-import Language.Python.Common.ParseError
+import Language.Python.Common.ParseError (ParseError(UnexpectedToken, UnexpectedChar))
 import Language.Python.Common.Token (Token, token_span, tokenString)
-import Language.Python.Common.SrcLocation (SrcSpan, startRow, startCol)
+import Language.Python.Common.SrcLocation (SrcSpan, startRow, startCol, getSpan)
 
 import Nope.Results
 import Nope.Sources
@@ -24,6 +24,11 @@ toResult sourceDescription (Left (UnexpectedToken token)) =
     let location = extractLocation sourceDescription token
         message = "Unexpected token '" ++ (tokenString token) ++ "'"
     in Left (SyntaxError location message)
+
+toResult sourceDescription (Left (UnexpectedChar char location)) =
+    let location' = spanToLocation sourceDescription (getSpan location)
+        message = "Unexpected character '" ++ [char] ++ "'"
+    in Left (SyntaxError location' message)
 -- TODO:
 toResult _ _ = undefined
 

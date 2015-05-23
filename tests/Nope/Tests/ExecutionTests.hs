@@ -9,7 +9,11 @@ import Nope.Results
 
 executionTestSuite :: TestTree
 executionTestSuite = testGroup "ExecutionTests" [
-    programTestCase "Syntax error"
+    programTestCase "Unexpected char"
+        "!"
+        (Left (SyntaxError (SourceLocation AnonymousSource 0 0) "Unexpected character '!'")),
+        
+    programTestCase "Unexpected token"
         "print 42"
         (Left (SyntaxError (SourceLocation AnonymousSource 0 6) "Unexpected token '42'")),
     
