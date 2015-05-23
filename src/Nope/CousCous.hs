@@ -13,12 +13,15 @@ literal :: Integer -> ExpressionNode
 literal value = Literal value
 
 data ExpressionNode =
+    VariableReference String |
     Literal Integer |
     Builtin [Char] |
     Call ExpressionNode [ExpressionNode]
     
 data ModuleNode = ModuleNode [StatementNode]    
 
-data StatementNode = ExpressionStatement ExpressionNode
+data StatementNode =
+    ExpressionStatement ExpressionNode |
+    Assign ExpressionNode ExpressionNode
 
 data Value = Unit | IntegerValue Integer | Print

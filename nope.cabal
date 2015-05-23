@@ -19,7 +19,8 @@ library
     build-depends:
         base,
         mtl,
-        language-python == 0.5.*
+        language-python == 0.5.*,
+        containers == 0.5.*
 
 Test-Suite nope-tests
     type:       exitcode-stdio-1.0
