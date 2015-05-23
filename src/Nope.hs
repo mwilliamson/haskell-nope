@@ -11,7 +11,7 @@ data Stdout = Stdout String
 
 runProgram :: Source -> Result Stdout
 runProgram source = do
-    nopeModuleNode <- parse source
+    nopeModuleNode <- parseModule source
     let cousCousModuleNode = desugar nopeModuleNode
         finalState = Interpreter.run cousCousModuleNode
     return $ Stdout (Interpreter.stdout finalState)

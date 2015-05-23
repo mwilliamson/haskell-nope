@@ -9,14 +9,6 @@ import Nope.Results
 
 executionTestSuite :: TestTree
 executionTestSuite = testGroup "ExecutionTests" [
-    programTestCase "Unexpected char"
-        "!"
-        (Left (SyntaxError (SourcePoint AnonymousSource 0 0) "Unexpected character '!'")),
-        
-    programTestCase "Unexpected token"
-        "print 42"
-        (Left (SyntaxError (SourcePoint AnonymousSource 0 6) "Unexpected token '42'")),
-    
     programTestCase "Printing integer prints that integer to stdout"
         "print(42)"
         (Right (Stdout "42\n"))

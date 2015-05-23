@@ -1,7 +1,7 @@
 module Nope.Parsing where
 
 import qualified Language.Python.Common.AST as Python
-import Language.Python.Version3.Parser
+import qualified Language.Python.Version3.Parser as PythonParser
 import Language.Python.Common.ParseError (ParseError(UnexpectedToken, UnexpectedChar, StrError))
 import Language.Python.Common.Token (Token, token_span, tokenString)
 import Language.Python.Common.SrcLocation (SrcSpan, startRow, startCol, getSpan)
@@ -10,9 +10,9 @@ import Nope.Results
 import Nope.Sources
 import qualified Nope.Nodes as Nodes
 
-parse :: Source -> Result Nodes.Module
-parse (Source description input) = do
-    (moduleSpan, _) <- toResult description $ parseModule input (show description)
+parseModule :: Source -> Result Nodes.Module
+parseModule (Source description input) = do
+    (moduleSpan, _) <- toResult description $ PythonParser.parseModule input (show description)
     transformModule moduleSpan
 
 
@@ -54,8 +54,10 @@ transformModule (Python.Module statements) = do
 transformStatement :: Python.StatementSpan -> Result Nodes.Statement
 transformStatement (Python.StmtExpr expression _) =
     fmap Nodes.ExpressionStatement (transformExpression expression)
--- TODO: error
+
 transformStatement _ = undefined
+--transformStatement statement =
+    --Left $ SyntaxError ()
 
 
 transformExpression :: Python.ExprSpan -> Result Nodes.Expression
