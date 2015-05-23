@@ -3,9 +3,10 @@ module Nope.Tests.Results where
 import Test.Tasty.HUnit
 
 import Nope
+import Nope.Results
 
 
-assertResult :: Result -> Result -> Assertion
-assertResult (Result (Stdout expectedStdout)) (Result (Stdout actualStdout)) =
+assertResult :: Result Stdout -> Result Stdout -> Assertion
+assertResult (Success (Stdout expectedStdout)) (Success (Stdout actualStdout)) =
     expectedStdout @=? actualStdout
 

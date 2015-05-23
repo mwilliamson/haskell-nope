@@ -2,15 +2,14 @@ module Nope where
 
 import Nope.Parsing
 import Nope.Desugaring
+import Nope.Results
 import qualified Nope.CousCous.Interpreter as Interpreter
 
 data Stdout = Stdout String
 
-data Result = Result Stdout
-
-runProgram :: String -> Result
-runProgram programText =
-    let (Right nopeModuleNode) = parse programText
-        cousCousModuleNode = desugar nopeModuleNode
+runProgram :: String -> Result Stdout
+runProgram programText = do
+    nopeModuleNode <- parse programText
+    let cousCousModuleNode = desugar nopeModuleNode
         finalState = Interpreter.run cousCousModuleNode
-    in Result (Stdout (Interpreter.stdout finalState))
+    Success $ Stdout (Interpreter.stdout finalState)

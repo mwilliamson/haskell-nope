@@ -4,12 +4,18 @@ import qualified Language.Python.Common.AST as Python
 import Language.Python.Version3.Parser
 import Language.Python.Common.ParseError
 
+import Nope.Results
 import qualified Nope.Nodes as Nodes
 
-parse :: String -> Either ParseError Nodes.Module
+parse :: String -> Result Nodes.Module
 parse input = do
-    (moduleSpan, _) <- parseModule input ""
+    (moduleSpan, _) <- toResult $ parseModule input ""
     return $ transformModule moduleSpan
+
+
+toResult :: Either ParseError a -> Result a
+toResult (Right x) = return x
+toResult (Left _) = undefined
 
 
 transformModule :: Python.ModuleSpan -> Nodes.Module

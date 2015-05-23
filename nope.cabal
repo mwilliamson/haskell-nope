@@ -8,6 +8,7 @@ library
     hs-source-dirs: src
     exposed-modules:
         Nope,
+        Nope.Results,
         Nope.Desugaring,
         Nope.Parsing,
         Nope.Nodes,
