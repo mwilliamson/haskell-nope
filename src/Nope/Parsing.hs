@@ -13,7 +13,7 @@ import qualified Nope.Nodes as Nodes
 parse :: Source -> Result Nodes.Module
 parse (Source description input) = do
     (moduleSpan, _) <- toResult description $ parseModule input (show description)
-    return $ transformModule moduleSpan
+    transformModule moduleSpan
 
 
 toResult :: SourceDescription -> Either ParseError a -> Result a
@@ -45,14 +45,15 @@ spanToLocation sourceDescription srcSpan =
     in SourcePoint sourceDescription rowIndex colIndex
 
 
-transformModule :: Python.ModuleSpan -> Nodes.Module
-transformModule (Python.Module statements) =
-    Nodes.Module $ map transformStatement statements
+transformModule :: Python.ModuleSpan -> Result Nodes.Module
+transformModule (Python.Module statements) = do
+    nopeStatements <- mapM transformStatement statements
+    return $ Nodes.Module nopeStatements
 
 
-transformStatement :: Python.StatementSpan -> Nodes.Statement
+transformStatement :: Python.StatementSpan -> Result Nodes.Statement
 transformStatement (Python.StmtExpr expression _) =
-    Nodes.ExpressionStatement $ transformExpression expression
+    return $ Nodes.ExpressionStatement $ transformExpression expression
 -- TODO: error
 transformStatement _ = undefined
 
