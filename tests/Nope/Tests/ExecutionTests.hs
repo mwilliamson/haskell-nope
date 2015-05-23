@@ -5,7 +5,6 @@ import Test.Tasty.HUnit
 
 import Nope
 import Nope.Results
-import Nope.Tests.Results
 
 executionTestSuite :: TestTree
 executionTestSuite = testGroup "ExecutionTests" [
@@ -17,4 +16,4 @@ executionTestSuite = testGroup "ExecutionTests" [
 
 programTestCase :: [Char] -> [Char] -> Result Stdout -> TestTree
 programTestCase testName programText expectedResult =
-    testCase testName $ assertResult expectedResult (runProgram programText)
+    testCase testName $ expectedResult @=? (runProgram programText)

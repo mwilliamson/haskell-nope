@@ -6,6 +6,7 @@ import Nope.Results
 import qualified Nope.CousCous.Interpreter as Interpreter
 
 data Stdout = Stdout String
+    deriving (Show, Eq)
 
 runProgram :: String -> Result Stdout
 runProgram programText = do
