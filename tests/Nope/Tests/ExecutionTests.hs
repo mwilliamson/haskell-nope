@@ -23,7 +23,11 @@ executionTestSuite = testGroup "ExecutionTests" [
         
     programTestCase "Variable can be referenced after it has been set"
         "x = 42\nprint(x)"
-        (Right (Stdout "42\n"))
+        (Right (Stdout "42\n")),
+        
+    programTestCase "Multiple variables can be set to the same value in single assignment statement"
+        "x = y = 42\nprint(x, y)"
+        (Right (Stdout "42 42\n"))
     ]
 
 

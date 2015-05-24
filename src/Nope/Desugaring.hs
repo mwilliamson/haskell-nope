@@ -4,15 +4,21 @@ import qualified Nope.Nodes as Nope
 import qualified Nope.CousCous.Nodes as CousCous
 
 desugar :: Nope.Module -> CousCous.Module
-desugar (Nope.Module statements) = CousCous.Module $ map desugarStatement statements
+desugar (Nope.Module statements) = CousCous.Module $ concat (map desugarStatement statements)
 
-desugarStatement :: Nope.Statement -> CousCous.Statement
+desugarStatement :: Nope.Statement -> [CousCous.Statement]
 desugarStatement (Nope.ExpressionStatement expression) =
-    CousCous.ExpressionStatement $ desugarExpression expression
-desugarStatement (Nope.Assign [target] value) =
-    CousCous.Assign (desugarExpression target) (desugarExpression value)
-desugarStatement (Nope.Assign _ _) =
-    undefined
+    [CousCous.ExpressionStatement $ desugarExpression expression]
+desugarStatement (Nope.Assign targets value) =
+    let cousCousValue = desugarExpression value
+        cousCousTargets = map desugarExpression targets
+        tmpReference = CousCous.VariableReference "tmp"
+    in case cousCousTargets of
+        [cousCousTarget] -> [CousCous.Assign cousCousTarget cousCousValue]
+        _ ->
+            let tmpAssignment = CousCous.Assign tmpReference cousCousValue
+                targetAssignments = map (\cousCousTarget -> CousCous.Assign cousCousTarget tmpReference) cousCousTargets
+            in tmpAssignment : targetAssignments
 
 desugarExpression :: Nope.Expression -> CousCous.Expression
 desugarExpression Nope.NoneLiteral = CousCous.NoneLiteral
