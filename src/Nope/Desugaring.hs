@@ -1,12 +1,12 @@
 module Nope.Desugaring where
 
 import qualified Nope.Nodes as Nope
-import qualified Nope.CousCous as CousCous
+import qualified Nope.CousCous.Nodes as CousCous
 
-desugar :: Nope.Module -> CousCous.ModuleNode
-desugar (Nope.Module statements) = CousCous.ModuleNode $ map desugarStatement statements
+desugar :: Nope.Module -> CousCous.Module
+desugar (Nope.Module statements) = CousCous.Module $ map desugarStatement statements
 
-desugarStatement :: Nope.Statement -> CousCous.StatementNode
+desugarStatement :: Nope.Statement -> CousCous.Statement
 desugarStatement (Nope.ExpressionStatement expression) =
     CousCous.ExpressionStatement $ desugarExpression expression
 desugarStatement (Nope.Assign [target] value) =
@@ -14,7 +14,7 @@ desugarStatement (Nope.Assign [target] value) =
 desugarStatement (Nope.Assign _ _) =
     undefined
 
-desugarExpression :: Nope.Expression -> CousCous.ExpressionNode
+desugarExpression :: Nope.Expression -> CousCous.Expression
 desugarExpression (Nope.Literal value) = CousCous.Literal value
 desugarExpression (Nope.Call func args) =
     CousCous.Call (desugarExpression func) (map desugarExpression args)

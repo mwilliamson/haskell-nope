@@ -14,6 +14,8 @@ library
         Nope.Parsing,
         Nope.Nodes,
         Nope.CousCous,
+        Nope.CousCous.Nodes,
+        Nope.CousCous.Values,
         Nope.CousCous.Interpreter
     ghc-options: -Wall -Werror
     build-depends:
