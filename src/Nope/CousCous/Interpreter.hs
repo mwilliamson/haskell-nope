@@ -1,20 +1,16 @@
 module Nope.CousCous.Interpreter where
 
-import Control.Monad.State
+import Control.Monad.State (State, modify, get, execState)
 import qualified Data.Map.Strict as Map
 
 import qualified Nope.CousCous.Nodes as Nodes
 import qualified Nope.CousCous.Values as Values
 
-data InterpreterState = InterpreterState Stdout Variables
-data Stdout = Stdout String deriving (Show, Eq)
-data Variables = Variables (Map.Map String Values.Value)
+data InterpreterState = InterpreterState { stdout :: String, variables :: Variables}
+type Variables = Map.Map String Values.Value
 
 initialState :: InterpreterState
-initialState = InterpreterState (Stdout "") (Variables (Map.singleton "print" Values.Print))
-
-stdout :: InterpreterState -> String
-stdout (InterpreterState (Stdout output) _) = output
+initialState = InterpreterState {stdout = "", variables = Map.singleton "print" Values.Print}
 
 run :: Nodes.Module -> InterpreterState
 run (Nodes.Module statements) = execState (mapM exec statements) initialState
@@ -25,9 +21,9 @@ exec (Nodes.ExpressionStatement expression) = do
     return ()
 exec (Nodes.Assign (Nodes.VariableReference name) valueExpression) = do
     value <- eval valueExpression
-    modify $ \(InterpreterState output (Variables variables)) ->
-        let variables' = Map.insert name value variables
-        in InterpreterState output (Variables variables')
+    modify $ \state -> 
+        let variables' = Map.insert name value (variables state)
+        in state {variables = variables'}
 -- TODO: error
 exec (Nodes.Assign _ _) = undefined
 
@@ -41,9 +37,9 @@ eval (Nodes.Call func args) = do
     argValues <- evalAll args
     call funcValue argValues
 eval (Nodes.VariableReference name) = do
-    (InterpreterState _ (Variables variables)) <- get
+    state <- get
     -- TODO: handle errors
-    let (Just value) = Map.lookup name variables
+    let (Just value) = Map.lookup name (variables state)
     return $ value
 
 call :: Values.Value -> [Values.Value] -> State InterpreterState Values.Value
@@ -54,8 +50,8 @@ call Values.Print [Values.IntegerValue value] = do
 call _ _ = undefined
 
 write :: [Char] -> State InterpreterState ()
-write value = modify $ \(InterpreterState (Stdout output) variables) ->
-    (InterpreterState (Stdout (output ++ value)) variables)
+write value = modify $ \state ->
+    state {stdout = (stdout state) ++ value}
 
 evalAll :: [Nodes.Expression] -> State InterpreterState [Values.Value]
 evalAll = mapM eval

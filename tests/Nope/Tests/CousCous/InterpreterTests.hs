@@ -10,18 +10,18 @@ interpreterTestSuite :: TestTree
 interpreterTestSuite = testGroup "InterpreterTests" [
     programTestCase "Printing integer prints that integer to stdout" 
         [Nodes.ExpressionStatement (Nodes.Call (Nodes.Builtin "print") [Nodes.Literal 42])]
-        (Interpreter.Stdout "42\n"),
+        "42\n",
         
     programTestCase "Variable can be referenced after it has been set"
         [
             (Nodes.Assign (Nodes.VariableReference "x") (Nodes.Literal 42)),
             (Nodes.ExpressionStatement (Nodes.Call (Nodes.Builtin "print") [Nodes.VariableReference "x"]))
             ]
-        (Interpreter.Stdout "42\n")
+        "42\n"
     ]
 
 
-programTestCase :: [Char] -> [Nodes.Statement] -> Interpreter.Stdout -> TestTree
+programTestCase :: [Char] -> [Nodes.Statement] -> String -> TestTree
 programTestCase testName ast expectedStdout =
-    let (Interpreter.InterpreterState actualStdout _) = (Interpreter.run (Nodes.Module ast))
-    in testCase testName $ expectedStdout @=? actualStdout
+    let state = (Interpreter.run (Nodes.Module ast))
+    in testCase testName $ expectedStdout @=? (Interpreter.stdout state)
