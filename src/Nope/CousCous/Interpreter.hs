@@ -1,5 +1,6 @@
 module Nope.CousCous.Interpreter where
 
+import Data.List (intercalate)
 import Control.Monad.State (State, modify, get, execState)
 import qualified Data.Map.Strict as Map
 
@@ -43,8 +44,8 @@ eval (Nodes.VariableReference name) = do
     return $ value
 
 call :: Values.Value -> [Values.Value] -> State InterpreterState Values.Value
-call Values.Print [Values.IntegerValue value] = do
-    write ((show value) ++ "\n")
+call Values.Print values = do
+    write ((intercalate " " (map Values.str values)) ++ "\n")
     return Values.None
     -- TODO: error
 call _ _ = undefined

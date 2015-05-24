@@ -13,6 +13,10 @@ executionTestSuite = testGroup "ExecutionTests" [
         "print(42)"
         (Right (Stdout "42\n")),
         
+    programTestCase "Printed expressions are separated by space"
+        "print(1, 2, 3)"
+        (Right (Stdout "1 2 3\n")),
+        
     programTestCase "Variable can be referenced after it has been set"
         "x = 42\nprint(x)"
         (Right (Stdout "42\n"))
