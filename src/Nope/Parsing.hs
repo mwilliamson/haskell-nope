@@ -69,7 +69,9 @@ parseModule (Source sourceDescription input) = do
 
 
         transformExpression :: Python.ExprSpan -> Result Nodes.Expression
-
+        
+        transformExpression (Python.None _) = return Nodes.NoneLiteral
+        
         transformExpression (Python.Int value _ _) =
             return $ Nodes.Literal value
 

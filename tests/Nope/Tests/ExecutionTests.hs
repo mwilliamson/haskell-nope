@@ -9,6 +9,10 @@ import Nope.Results
 
 executionTestSuite :: TestTree
 executionTestSuite = testGroup "ExecutionTests" [
+    programTestCase "Printing None prints to stdout"
+        "print(None)"
+        (Right (Stdout "None\n")),
+        
     programTestCase "Printing integer prints that integer to stdout"
         "print(42)"
         (Right (Stdout "42\n")),

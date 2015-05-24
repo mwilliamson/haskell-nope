@@ -9,6 +9,7 @@ data Statement =
     deriving (Eq, Show)
 
 data Expression =
+    NoneLiteral |
     Literal Integer |
     Builtin String |
     Call Expression [Expression] |

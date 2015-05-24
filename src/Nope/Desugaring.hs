@@ -15,6 +15,7 @@ desugarStatement (Nope.Assign _ _) =
     undefined
 
 desugarExpression :: Nope.Expression -> CousCous.Expression
+desugarExpression Nope.NoneLiteral = CousCous.NoneLiteral
 desugarExpression (Nope.Literal value) = CousCous.Literal value
 desugarExpression (Nope.Call func args) =
     CousCous.Call (desugarExpression func) (map desugarExpression args)

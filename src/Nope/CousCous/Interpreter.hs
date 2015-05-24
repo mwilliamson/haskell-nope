@@ -29,6 +29,7 @@ exec (Nodes.Assign (Nodes.VariableReference name) valueExpression) = do
 exec (Nodes.Assign _ _) = undefined
 
 eval :: Nodes.Expression -> State InterpreterState Values.Value
+eval Nodes.NoneLiteral = return Values.None
 eval (Nodes.Literal value) = return (Values.IntegerValue value)
 eval (Nodes.Builtin "print") = return Values.Print
 -- TODO: error

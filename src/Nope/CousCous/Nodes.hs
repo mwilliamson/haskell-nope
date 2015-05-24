@@ -1,6 +1,7 @@
 module Nope.CousCous.Nodes where
 
 data Expression =
+    NoneLiteral |
     VariableReference String |
     Literal Integer |
     Builtin [Char] |
