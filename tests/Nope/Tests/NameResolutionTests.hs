@@ -4,7 +4,6 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import Nope.Parsing (parsedModule)
-import Nope.NameDeclaration (VariableDeclaration(..))
 import Nope.NameResolution
 import qualified Nope.Nodes as Nope
 

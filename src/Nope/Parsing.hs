@@ -11,13 +11,13 @@ import Nope.Sources
 import qualified Nope.Nodes as Nodes
 
 
-type ParsedModule = Nodes.Module () String
+type ParsedModule = Nodes.Module String
 type ParsedStatement = Nodes.Statement String
 type ParsedExpression = Nodes.Expression String
 
 
 parsedModule :: [ParsedStatement] -> ParsedModule
-parsedModule statements = Nodes.Module statements ()
+parsedModule statements = Nodes.Module statements
 
 
 parseModule :: Source -> Result ParsedModule

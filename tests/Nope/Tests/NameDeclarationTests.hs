@@ -12,12 +12,5 @@ nameDeclarationTestSuite = testGroup "NameDeclarationTests"
     [ testCase "assigned names in module are scoped to module" $
         let moduleNode = parsedModule [Nope.Assign [Nope.VariableReference "x"] Nope.none,
                                        Nope.Assign [Nope.VariableReference "y"] Nope.none]
-            scopedNodes = declareNames moduleNode
-        in ["x", "y"] @=? (declaredNames scopedNodes)
-        
-    , testCase "declaration is given unique ID" $
-        let moduleNode = parsedModule [Nope.Assign [Nope.VariableReference "x"] Nope.none,
-                                       Nope.Assign [Nope.VariableReference "y"] Nope.none]
-            scopedNodes = declareNames moduleNode
-        in Just (VariableDeclaration "y" 2) @=? declaration "y" scopedNodes
+        in ["x", "y"] @=? (namesDeclaredInModule moduleNode)
     ]
