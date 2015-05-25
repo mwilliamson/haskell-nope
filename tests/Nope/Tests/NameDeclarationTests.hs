@@ -14,4 +14,10 @@ nameDeclarationTestSuite = testGroup "NameDeclarationTests"
                                        Nope.Assign [Nope.VariableReference "y"] Nope.NoneLiteral]
             scopedNodes = declareNames moduleNode
         in ["x", "y"] @=? (declaredNames scopedNodes)
+        
+    , testCase "declaration is given unique ID" $
+        let moduleNode = parsedModule [Nope.Assign [Nope.VariableReference "x"] Nope.NoneLiteral,
+                                       Nope.Assign [Nope.VariableReference "y"] Nope.NoneLiteral]
+            scopedNodes = declareNames moduleNode
+        in Just (VariableDeclaration "y" 2) @=? declaration "y" scopedNodes
     ]

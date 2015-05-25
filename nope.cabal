@@ -13,6 +13,7 @@ library
         Nope.Nodes,
         Nope.Parsing,
         Nope.NameDeclaration,
+        Nope.NameResolution,
         Nope.Desugaring,
         Nope.CousCous,
         Nope.CousCous.Nodes,
