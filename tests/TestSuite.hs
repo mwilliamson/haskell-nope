@@ -5,6 +5,7 @@ import Nope
 
 import Nope.Tests.ParsingTests
 import Nope.Tests.NameDeclarationTests
+import Nope.Tests.NameResolutionTests
 import Nope.Tests.DesugaringTests
 import Nope.Tests.CousCous.InterpreterTests
 import Nope.Tests.ExecutionTests
@@ -15,6 +16,7 @@ tests :: TestTree
 tests = testGroup "Tests" [
     parsingTestSuite,
     nameDeclarationTestSuite,
+    nameResolutionTestSuite,
     desugaringTestSuite,
     interpreterTestSuite,
     executionTestSuite
