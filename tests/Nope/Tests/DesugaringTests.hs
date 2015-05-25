@@ -23,6 +23,6 @@ desugaringTestSuite = testGroup "DesugaringTests" [
     ]
 
 
-desugarStatementTestCase :: String -> Nope.Statement -> [CousCous.Statement] -> TestTree
+desugarStatementTestCase :: String -> (Nope.Statement String) -> [CousCous.Statement] -> TestTree
 desugarStatementTestCase name nopeStatement expectedCousCous =
     testCase name $ expectedCousCous @=? (desugarStatement nopeStatement)

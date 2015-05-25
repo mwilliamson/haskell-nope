@@ -10,7 +10,13 @@ import Nope.Results
 import Nope.Sources
 import qualified Nope.Nodes as Nodes
 
-parseModule :: Source -> Result Nodes.Module
+
+type ParsedModule = Nodes.Module String
+type ParsedStatement = Nodes.Statement String
+type ParsedExpression = Nodes.Expression String
+
+
+parseModule :: Source -> Result ParsedModule
 parseModule (Source sourceDescription input) = do
     (moduleSpan, _) <- toResult $ PythonParser.parseModule input (show sourceDescription)
     transformModule moduleSpan where
@@ -43,13 +49,13 @@ parseModule (Source sourceDescription input) = do
             in SourcePoint sourceDescription rowIndex colIndex
 
 
-        transformModule :: Python.ModuleSpan -> Result Nodes.Module
+        transformModule :: Python.ModuleSpan -> Result ParsedModule
         transformModule (Python.Module statements) = do
             nopeStatements <- mapM transformStatement statements
             return $ Nodes.Module nopeStatements
 
 
-        transformStatement :: Python.StatementSpan -> Result Nodes.Statement
+        transformStatement :: Python.StatementSpan -> Result ParsedStatement
         
         transformStatement (Python.StmtExpr expression _) =
             fmap Nodes.ExpressionStatement (transformExpression expression)
@@ -68,7 +74,7 @@ parseModule (Source sourceDescription input) = do
             Left $ SyntaxError (spanToLocation srcSpan) ("Unsupported node: " ++ nodeDescription)
 
 
-        transformExpression :: Python.ExprSpan -> Result Nodes.Expression
+        transformExpression :: Python.ExprSpan -> Result ParsedExpression
         
         transformExpression (Python.None _) = return Nodes.NoneLiteral
         
@@ -87,7 +93,7 @@ parseModule (Source sourceDescription input) = do
         transformExpression _ = undefined
 
 
-        transformArgument :: Python.ArgumentSpan -> Result Nodes.Expression
+        transformArgument :: Python.ArgumentSpan -> Result ParsedExpression
         transformArgument (Python.ArgExpr expression _) = transformExpression expression
         -- TODO: error
         transformArgument _ = undefined

@@ -1,17 +1,17 @@
 module Nope.Nodes where
 
-data Module = Module [Statement]
+data Module ref = Module [Statement ref]
     deriving (Eq, Show)
 
-data Statement =
-    ExpressionStatement Expression |
-    Assign [Expression] Expression
+data Statement ref =
+    ExpressionStatement (Expression ref) |
+    Assign [Expression ref] (Expression ref)
     deriving (Eq, Show)
 
-data Expression =
+data Expression ref =
     NoneLiteral |
     Literal Integer |
     Builtin String |
-    Call Expression [Expression] |
-    VariableReference String
+    Call (Expression ref) [Expression ref] |
+    VariableReference ref
     deriving (Eq, Show)

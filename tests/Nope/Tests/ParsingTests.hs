@@ -26,11 +26,11 @@ parsingTestSuite = testGroup "ParsingTests" [
     ]
 
 
-parsingTestCase :: String -> String -> Result Nodes.Module -> TestTree
+parsingTestCase :: String -> String -> Result ParsedModule -> TestTree
 parsingTestCase testName programText expectedResult =
     testCase testName $ expectedResult @=? (parseString programText)
 
 
-parseString :: String -> Result Nodes.Module
+parseString :: String -> Result ParsedModule
 parseString programText =
     parseModule (Source AnonymousSource programText)
