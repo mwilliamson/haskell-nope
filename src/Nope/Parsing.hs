@@ -11,9 +11,13 @@ import Nope.Sources
 import qualified Nope.Nodes as Nodes
 
 
-type ParsedModule = Nodes.Module String
+type ParsedModule = Nodes.Module () String
 type ParsedStatement = Nodes.Statement String
 type ParsedExpression = Nodes.Expression String
+
+
+parsedModule :: [ParsedStatement] -> ParsedModule
+parsedModule statements = Nodes.Module statements ()
 
 
 parseModule :: Source -> Result ParsedModule
@@ -52,7 +56,7 @@ parseModule (Source sourceDescription input) = do
         transformModule :: Python.ModuleSpan -> Result ParsedModule
         transformModule (Python.Module statements) = do
             nopeStatements <- mapM transformStatement statements
-            return $ Nodes.Module nopeStatements
+            return $ parsedModule nopeStatements
 
 
         transformStatement :: Python.StatementSpan -> Result ParsedStatement

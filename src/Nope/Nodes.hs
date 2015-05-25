@@ -1,6 +1,8 @@
 module Nope.Nodes where
 
-data Module ref = Module [Statement ref]
+data Module scope ref  = Module {
+    statements :: [Statement ref],
+    scope :: scope }
     deriving (Eq, Show)
 
 data Statement ref =

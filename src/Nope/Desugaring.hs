@@ -2,11 +2,12 @@ module Nope.Desugaring where
 
 import qualified Nope.Nodes as Nope
 import qualified Nope.CousCous.Nodes as CousCous
+import Nope.Parsing (ParsedModule, ParsedStatement, ParsedExpression)
 
-desugar :: (Nope.Module String) -> CousCous.Module
-desugar (Nope.Module statements) = CousCous.Module $ concat (map desugarStatement statements)
+desugar :: ParsedModule -> CousCous.Module
+desugar nopeModule = CousCous.Module $ concat (map desugarStatement (Nope.statements nopeModule))
 
-desugarStatement :: (Nope.Statement String) -> [CousCous.Statement]
+desugarStatement :: ParsedStatement -> [CousCous.Statement]
 desugarStatement (Nope.ExpressionStatement expression) =
     [CousCous.ExpressionStatement $ desugarExpression expression]
 desugarStatement (Nope.Assign targets value) =
@@ -20,7 +21,7 @@ desugarStatement (Nope.Assign targets value) =
                 targetAssignments = map (\cousCousTarget -> CousCous.Assign cousCousTarget tmpReference) cousCousTargets
             in tmpAssignment : targetAssignments
 
-desugarExpression :: (Nope.Expression String) -> CousCous.Expression
+desugarExpression :: ParsedExpression -> CousCous.Expression
 desugarExpression Nope.NoneLiteral = CousCous.NoneLiteral
 desugarExpression (Nope.Literal value) = CousCous.Literal value
 desugarExpression (Nope.Call func args) =
