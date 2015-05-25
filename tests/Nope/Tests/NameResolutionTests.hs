@@ -11,8 +11,8 @@ import qualified Nope.Nodes as Nope
 nameResolutionTestSuite :: TestTree
 nameResolutionTestSuite = testGroup "NameResolutionTests"
     [ testCase "assigned names in module are scoped to module" $
-        let moduleNode = parsedModule [Nope.Assign [Nope.VariableReference "x"] Nope.NoneLiteral]
+        let moduleNode = parsedModule [Nope.Assign [Nope.VariableReference "x"] Nope.none]
             scopedNodes = resolveReferences moduleNode
-            expectedResult = [Nope.Assign [Nope.VariableReference (VariableDeclaration "x" 1)] Nope.NoneLiteral]
+            expectedResult = [Nope.Assign [Nope.VariableReference (VariableDeclaration "x" 1)] Nope.none]
         in expectedResult @=? Nope.statements (resolveReferences moduleNode)
     ]

@@ -22,9 +22,13 @@ desugarStatement (Nope.Assign targets value) =
             in tmpAssignment : targetAssignments
 
 desugarExpression :: ParsedExpression -> CousCous.Expression
-desugarExpression Nope.NoneLiteral = CousCous.NoneLiteral
-desugarExpression (Nope.Literal value) = CousCous.Literal value
 desugarExpression (Nope.Call func args) =
     CousCous.Call (desugarExpression func) (map desugarExpression args)
-desugarExpression (Nope.Builtin name) = CousCous.Builtin name
 desugarExpression (Nope.VariableReference name) = CousCous.VariableReference name
+desugarExpression (Nope.Literal literal) = desugarLiteral literal
+
+
+desugarLiteral :: Nope.Literal -> CousCous.Expression
+desugarLiteral Nope.NoneLiteral = CousCous.NoneLiteral
+desugarLiteral (Nope.IntegerLiteral value) = CousCous.Literal value
+desugarLiteral (Nope.Builtin name) = CousCous.Builtin name

@@ -10,11 +10,11 @@ import Nope.CousCous.Nodes as CousCous
 desugaringTestSuite :: TestTree
 desugaringTestSuite = testGroup "DesugaringTests" [
     desugarStatementTestCase "assignment to single variable is desugared to single assignment"
-        (Nope.Assign [Nope.VariableReference "x"] Nope.NoneLiteral)
+        (Nope.Assign [Nope.VariableReference "x"] Nope.none)
         [CousCous.Assign (CousCous.VariableReference "x") CousCous.NoneLiteral],
         
     desugarStatementTestCase "assigning same value to multiple variables is desugared to multiple assignments"
-        (Nope.Assign [Nope.VariableReference "x", Nope.VariableReference "y"] Nope.NoneLiteral)
+        (Nope.Assign [Nope.VariableReference "x", Nope.VariableReference "y"] Nope.none)
         [
             CousCous.Assign (CousCous.VariableReference "tmp") CousCous.NoneLiteral,
             CousCous.Assign (CousCous.VariableReference "x") (CousCous.VariableReference "tmp"),

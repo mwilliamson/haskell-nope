@@ -11,9 +11,19 @@ data Statement ref =
     deriving (Eq, Show)
 
 data Expression ref =
-    NoneLiteral |
-    Literal Integer |
-    Builtin String |
+    Literal Literal |
     Call (Expression ref) [Expression ref] |
     VariableReference ref
     deriving (Eq, Show)
+
+data Literal =
+    NoneLiteral |
+    IntegerLiteral Integer |
+    Builtin String
+    deriving (Eq, Show)
+
+none :: Expression a
+none = Literal NoneLiteral
+
+integer :: Integer -> Expression a
+integer value = Literal (IntegerLiteral value)

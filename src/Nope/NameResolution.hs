@@ -24,9 +24,7 @@ resolveExpressionReference scope (Nodes.Call func args) =
     let func' = resolveExpressionReference scope func
         args' = map (resolveExpressionReference scope) args
     in Nodes.Call func' args'
-resolveExpressionReference _ Nodes.NoneLiteral = Nodes.NoneLiteral
-resolveExpressionReference _ (Nodes.Literal value) = Nodes.Literal value
-resolveExpressionReference _ (Nodes.Builtin name) = Nodes.Builtin name
+resolveExpressionReference _ (Nodes.Literal literal) = Nodes.Literal literal
 
 
 type ExpressionMap ref ref' = Nodes.Expression ref -> Nodes.Expression ref'

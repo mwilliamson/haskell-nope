@@ -80,10 +80,10 @@ parseModule (Source sourceDescription input) = do
 
         transformExpression :: Python.ExprSpan -> Result ParsedExpression
         
-        transformExpression (Python.None _) = return Nodes.NoneLiteral
+        transformExpression (Python.None _) = return Nodes.none
         
         transformExpression (Python.Int value _ _) =
-            return $ Nodes.Literal value
+            return $ Nodes.integer value
 
         transformExpression (Python.Call func args _) = do
             nopeFunc <- transformExpression func
