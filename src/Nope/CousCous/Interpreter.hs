@@ -7,16 +7,17 @@ import qualified Data.Map.Strict as Map
 import qualified Nope.CousCous.Nodes as Nodes
 import qualified Nope.CousCous.Values as Values
 
-data InterpreterState = InterpreterState { stdout :: String, variables :: Variables}
+data Environment = Environment { stdout :: String, variables :: Variables}
 type Variables = Map.Map String Values.Value
+type InterpreterState = State Environment
 
-initialState :: InterpreterState
-initialState = InterpreterState {stdout = "", variables = Map.singleton "print" Values.Print}
+initialState :: Environment
+initialState = Environment {stdout = "", variables = Map.singleton "print" Values.Print}
 
-run :: Nodes.Module -> InterpreterState
+run :: Nodes.Module -> Environment
 run (Nodes.Module statements) = execState (mapM exec statements) initialState
 
-exec :: Nodes.Statement -> State InterpreterState ()
+exec :: Nodes.Statement -> InterpreterState ()
 exec (Nodes.ExpressionStatement expression) = do
     _ <- eval expression
     return ()
@@ -28,7 +29,7 @@ exec (Nodes.Assign (Nodes.VariableReference name) valueExpression) = do
 -- TODO: error
 exec (Nodes.Assign _ _) = undefined
 
-eval :: Nodes.Expression -> State InterpreterState Values.Value
+eval :: Nodes.Expression -> InterpreterState Values.Value
 eval Nodes.NoneLiteral = return Values.None
 eval (Nodes.Literal value) = return (Values.IntegerValue value)
 eval (Nodes.Builtin "print") = return Values.Print
@@ -44,16 +45,16 @@ eval (Nodes.VariableReference name) = do
     let (Just value) = Map.lookup name (variables state)
     return $ value
 
-call :: Values.Value -> [Values.Value] -> State InterpreterState Values.Value
+call :: Values.Value -> [Values.Value] -> InterpreterState Values.Value
 call Values.Print values = do
     write ((intercalate " " (map Values.str values)) ++ "\n")
     return Values.None
     -- TODO: error
 call _ _ = undefined
 
-write :: [Char] -> State InterpreterState ()
+write :: [Char] -> InterpreterState ()
 write value = modify $ \state ->
     state {stdout = (stdout state) ++ value}
 
-evalAll :: [Nodes.Expression] -> State InterpreterState [Values.Value]
+evalAll :: [Nodes.Expression] -> InterpreterState [Values.Value]
 evalAll = mapM eval
