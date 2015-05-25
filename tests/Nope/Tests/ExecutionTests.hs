@@ -27,7 +27,11 @@ executionTestSuite = testGroup "ExecutionTests" [
         
     programTestCase "Multiple variables can be set to the same value in single assignment statement"
         "x = y = 42\nprint(x, y)"
-        (Right (Stdout "42 42\n"))
+        (Right (Stdout "42 42\n")),
+        
+    programTestCase "Attempting to access undefined variable raises error"
+        "print(x)"
+        (Right (Stdout "Exception: undefined variable: 'x'"))
     ]
 
 

@@ -17,7 +17,11 @@ interpreterTestSuite = testGroup "InterpreterTests" [
             (Nodes.Assign (Nodes.VariableReference "x") (Nodes.Literal 42)),
             (Nodes.ExpressionStatement (Nodes.Call (Nodes.Builtin "print") [Nodes.VariableReference "x"]))
             ]
-        "42\n"
+        "42\n",
+        
+    programTestCase "Attempting to access undefined variable raises error"
+        [Nodes.ExpressionStatement (Nodes.Call (Nodes.Builtin "print") [Nodes.VariableReference "x"])]
+        "Exception: undefined variable: 'x'"
     ]
 
 
