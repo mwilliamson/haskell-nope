@@ -21,6 +21,20 @@ interpreterTestSuite = testGroup "InterpreterTests" [
         
     programTestCase "Attempting to access undefined variable raises error"
         [Nodes.ExpressionStatement (Nodes.Call (Nodes.Builtin "print") [Nodes.VariableReference "x"])]
+        "Exception: undefined variable: 'x'",
+        
+    programTestCase "Previous writes to stdout are retained when error is raised"
+        [
+            Nodes.ExpressionStatement (Nodes.Call (Nodes.Builtin "print") [Nodes.Literal 42]),
+            Nodes.ExpressionStatement (Nodes.Call (Nodes.Builtin "print") [Nodes.VariableReference "x"])
+            ]
+        "42\nException: undefined variable: 'x'",
+        
+    programTestCase "Following writes to stdout are ignored when error is raised"
+        [
+            Nodes.ExpressionStatement (Nodes.Call (Nodes.Builtin "print") [Nodes.VariableReference "x"]),
+            Nodes.ExpressionStatement (Nodes.Call (Nodes.Builtin "print") [Nodes.Literal 42])
+            ]
         "Exception: undefined variable: 'x'"
     ]
 

@@ -1,7 +1,7 @@
 module Nope.CousCous.Interpreter where
 
 import Data.List (intercalate)
-import Control.Monad.State (StateT, modify, get, execStateT)
+import Control.Monad.State (StateT, modify, get, put, execStateT)
 import Control.Monad.Except (throwError, catchError)
 import qualified Data.Map.Strict as Map
 
@@ -10,7 +10,7 @@ import qualified Nope.CousCous.Values as Values
 
 data Environment = Environment { stdout :: String, variables :: Variables}
 type Variables = Map.Map String Values.Value
-type InterpreterState = StateT Environment (Either String)
+type InterpreterState = StateT Environment (Either (Environment, String))
 
 initialState :: Environment
 initialState = Environment {stdout = "", variables = Map.singleton "print" Values.Print}
@@ -27,7 +27,7 @@ run moduleNode =
 execModule :: Nodes.Module -> InterpreterState ()
 execModule (Nodes.Module statements) =
     ((mapM exec statements) >>= (const (return ()))) `catchError`
-        \message -> write ("Exception: " ++ message)
+        \(env, message) -> do { put env; write ("Exception: " ++ message) }
 
 exec :: Nodes.Statement -> InterpreterState ()
 exec (Nodes.ExpressionStatement expression) = do
@@ -55,7 +55,7 @@ eval (Nodes.VariableReference name) = do
     state <- get
     case Map.lookup name (variables state) of
         (Just value) -> return $ value
-        Nothing -> throwError ("undefined variable: '" ++ name ++ "'")
+        Nothing -> throwError (state, "undefined variable: '" ++ name ++ "'")
 
 call :: Values.Value -> [Values.Value] -> InterpreterState Values.Value
 call Values.Print values = do
