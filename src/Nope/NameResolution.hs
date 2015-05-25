@@ -15,12 +15,12 @@ type Environment = Map.Map String VariableDeclaration
 
 resolveReferences :: ParsedModule -> Nodes.Module VariableDeclaration
 resolveReferences moduleNode =
-    resolveModuleReferences moduleNode
+    evalState (resolveModuleReferences moduleNode) 1
 
-resolveModuleReferences :: Nodes.Module String -> Nodes.Module VariableDeclaration
-resolveModuleReferences moduleNode =
-    let scope = (evalState (scopeForModule moduleNode) 1)
-    in mapModuleExpressions (resolveExpressionReference scope) moduleNode
+resolveModuleReferences :: Nodes.Module String -> Counter (Nodes.Module VariableDeclaration)
+resolveModuleReferences moduleNode = do
+    scope <- scopeForModule moduleNode
+    return $ mapModuleExpressions (resolveExpressionReference scope) moduleNode
 
 
 resolveExpressionReference :: Environment -> Nodes.Expression String -> Nodes.Expression VariableDeclaration
