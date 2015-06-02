@@ -26,4 +26,5 @@ desugaringTestSuite = testGroup "DesugaringTests" [
 
 desugarStatementTestCase :: String -> ResolvedStatement -> [CousCous.Statement] -> TestTree
 desugarStatementTestCase name nopeStatement expectedCousCous =
-    testCase name $ expectedCousCous @=? (desugarStatement nopeStatement)
+    let (CousCous.Module statements) = desugar (Nope.Module [nopeStatement])
+    in testCase name $ expectedCousCous @=? statements

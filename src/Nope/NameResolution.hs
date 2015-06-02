@@ -1,4 +1,4 @@
-module Nope.NameResolution where
+module Nope.NameResolution (ResolvedModule, ResolvedStatement, ResolvedExpression, resolveReferences, VariableDeclaration(..)) where
 
 import Control.Monad.State (State, get, put, evalState)
 import qualified Data.Map.Strict as Map
@@ -18,6 +18,8 @@ type Environment = Map.Map String VariableDeclaration
 type ResolvedModule = Nodes.Module VariableDeclaration
 type ResolvedStatement = Nodes.Statement VariableDeclaration
 type ResolvedExpression = Nodes.Expression VariableDeclaration
+
+type Counter = State Int
 
 resolveReferences :: ParsedModule -> ResolvedModule
 resolveReferences moduleNode =
@@ -55,7 +57,6 @@ mapStatementExpressions f (Nodes.ExpressionStatement value) =
     Nodes.ExpressionStatement (f value)
 mapStatementExpressions f (Nodes.Assign targets value) =
     Nodes.Assign (map f targets) (f value)
-type Counter = State Int
 
 scopeForModule :: ParsedModule -> Counter (Map.Map String VariableDeclaration)
 scopeForModule moduleNode = do

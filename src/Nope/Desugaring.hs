@@ -1,25 +1,42 @@
-module Nope.Desugaring where
+module Nope.Desugaring (desugar) where
+
+import Control.Monad.State (State, get, put, evalState)
 
 import qualified Nope.Nodes as Nope
 import qualified Nope.CousCous.Nodes as CousCous
 import Nope.NameResolution
 
-desugar :: ResolvedModule -> CousCous.Module
-desugar nopeModule = CousCous.Module $ concat (map desugarStatement (Nope.statements nopeModule))
+type Counter = State Int
 
-desugarStatement :: ResolvedStatement -> [CousCous.Statement]
+desugar :: ResolvedModule -> CousCous.Module
+desugar nopeModule =
+    evalState (desugarModule nopeModule) 1
+
+desugarModule :: ResolvedModule -> Counter CousCous.Module
+desugarModule nopeModule = do
+    statements <- mapM desugarStatement (Nope.statements nopeModule)
+    return $ CousCous.Module (concat statements)
+
+desugarStatement :: ResolvedStatement -> Counter [CousCous.Statement]
 desugarStatement (Nope.ExpressionStatement expression) =
-    [CousCous.ExpressionStatement $ desugarExpression expression]
-desugarStatement (Nope.Assign targets value) =
+    return $ [CousCous.ExpressionStatement $ desugarExpression expression]
+desugarStatement (Nope.Assign targets value) = do
     let cousCousValue = desugarExpression value
-        cousCousTargets = map desugarExpression targets
-        tmpReference = CousCous.VariableReference (CousCous.Temporary 1)
-    in case cousCousTargets of
+    let cousCousTargets = map desugarExpression targets
+    tmpReference <- createTemporary
+    return $ case cousCousTargets of
         [cousCousTarget] -> [CousCous.Assign cousCousTarget cousCousValue]
         _ ->
             let tmpAssignment = CousCous.Assign tmpReference cousCousValue
                 targetAssignments = map (\cousCousTarget -> CousCous.Assign cousCousTarget tmpReference) cousCousTargets
             in tmpAssignment : targetAssignments
+
+
+createTemporary :: Counter CousCous.Expression
+createTemporary = do
+    index <- get
+    put (index + 1)
+    return $ CousCous.VariableReference (CousCous.Temporary index)
 
 desugarExpression :: ResolvedExpression -> CousCous.Expression
 desugarExpression (Nope.Call func args) =
