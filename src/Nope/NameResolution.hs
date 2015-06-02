@@ -8,26 +8,32 @@ import Nope.NameDeclaration
 import qualified Nope.Nodes as Nodes
 
 
-data VariableDeclaration = VariableDeclaration String Int
+data VariableDeclaration =
+    VariableDeclaration String Int |
+    Builtin String
     deriving (Show, Eq)
 
 type Environment = Map.Map String VariableDeclaration
 
-resolveReferences :: ParsedModule -> Nodes.Module VariableDeclaration
+type ResolvedModule = Nodes.Module VariableDeclaration
+type ResolvedStatement = Nodes.Statement VariableDeclaration
+type ResolvedExpression = Nodes.Expression VariableDeclaration
+
+resolveReferences :: ParsedModule -> ResolvedModule
 resolveReferences moduleNode =
     evalState (resolveModuleReferences moduleNode) 1
 
-resolveModuleReferences :: Nodes.Module String -> Counter (Nodes.Module VariableDeclaration)
+resolveModuleReferences :: Nodes.Module String -> Counter ResolvedModule
 resolveModuleReferences moduleNode = do
     scope <- scopeForModule moduleNode
     return $ mapModuleExpressions (resolveExpressionReference scope) moduleNode
 
 
-resolveExpressionReference :: Environment -> Nodes.Expression String -> Nodes.Expression VariableDeclaration
+resolveExpressionReference :: Environment -> Nodes.Expression String -> ResolvedExpression
 resolveExpressionReference env (Nodes.VariableReference name) =
-    -- TODO: errors
-    let (Just variableDeclaration) = Map.lookup name env
-    in Nodes.VariableReference variableDeclaration
+    case Map.lookup name env of
+        Just variableDeclaration -> Nodes.VariableReference variableDeclaration
+        Nothing -> Nodes.VariableReference (Builtin name)
 resolveExpressionReference scope (Nodes.Call func args) =
     let func' = resolveExpressionReference scope func
         args' = map (resolveExpressionReference scope) args

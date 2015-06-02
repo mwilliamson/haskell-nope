@@ -1,6 +1,7 @@
 module Nope where
 
 import Nope.Parsing
+import Nope.NameResolution
 import Nope.Desugaring
 import Nope.Results
 import Nope.Sources
@@ -12,6 +13,7 @@ data Stdout = Stdout String
 runProgram :: Source -> Result Stdout
 runProgram source = do
     nopeModuleNode <- parseModule source
-    let cousCousModuleNode = desugar nopeModuleNode
+    let resolvedModule = resolveReferences nopeModuleNode
+    let cousCousModuleNode = desugar resolvedModule
         finalState = Interpreter.run cousCousModuleNode
     return $ Stdout (Interpreter.stdout finalState)

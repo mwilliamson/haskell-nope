@@ -9,11 +9,11 @@ import qualified Nope.CousCous.Nodes as Nodes
 import qualified Nope.CousCous.Values as Values
 
 data Environment = Environment { stdout :: String, variables :: Variables}
-type Variables = Map.Map String Values.Value
+type Variables = Map.Map Nodes.VariableDeclaration Values.Value
 type InterpreterState = ExceptT String (State Environment)
 
 initialState :: Environment
-initialState = Environment {stdout = "", variables = Map.singleton "print" Values.Print}
+initialState = Environment {stdout = "", variables = Map.singleton (Nodes.Builtin "print") Values.Print}
 
 run :: Nodes.Module -> Environment
 run moduleNode =
@@ -30,10 +30,10 @@ exec :: Nodes.Statement -> InterpreterState ()
 exec (Nodes.ExpressionStatement expression) = do
     _ <- eval expression
     return ()
-exec (Nodes.Assign (Nodes.VariableReference name) valueExpression) = do
+exec (Nodes.Assign (Nodes.VariableReference declaration) valueExpression) = do
     value <- eval valueExpression
     modify $ \state -> 
-        let variables' = Map.insert name value (variables state)
+        let variables' = Map.insert declaration value (variables state)
         in state {variables = variables'}
 -- TODO: error
 exec (Nodes.Assign _ _) = undefined
@@ -41,18 +41,15 @@ exec (Nodes.Assign _ _) = undefined
 eval :: Nodes.Expression -> InterpreterState Values.Value
 eval Nodes.NoneLiteral = return Values.None
 eval (Nodes.Literal value) = return (Values.IntegerValue value)
-eval (Nodes.Builtin "print") = return Values.Print
--- TODO: error
-eval (Nodes.Builtin _) = undefined
 eval (Nodes.Call func args) = do
     funcValue <- eval func
     argValues <- evalAll args
     call funcValue argValues
-eval (Nodes.VariableReference name) = do
+eval (Nodes.VariableReference declaration) = do
     state <- get
-    case Map.lookup name (variables state) of
+    case Map.lookup declaration (variables state) of
         (Just value) -> return $ value
-        Nothing -> throwError ("undefined variable: '" ++ name ++ "'")
+        Nothing -> throwError ("undefined variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
 
 call :: Values.Value -> [Values.Value] -> InterpreterState Values.Value
 call Values.Print values = do

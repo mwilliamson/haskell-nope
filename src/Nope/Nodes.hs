@@ -16,8 +16,7 @@ data Expression ref =
 
 data Literal =
     NoneLiteral |
-    IntegerLiteral Integer |
-    Builtin String
+    IntegerLiteral Integer
     deriving (Eq, Show)
 
 none :: Expression a
