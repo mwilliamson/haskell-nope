@@ -34,9 +34,14 @@ desugarStatement (Nope.Assign targets value) = do
 
 createTemporary :: Counter CousCous.Expression
 createTemporary = do
+    index <- increment
+    return $ CousCous.VariableReference (CousCous.Temporary index)
+
+increment :: Counter Int
+increment = do
     index <- get
     put (index + 1)
-    return $ CousCous.VariableReference (CousCous.Temporary index)
+    return index
 
 desugarExpression :: ResolvedExpression -> CousCous.Expression
 desugarExpression (Nope.Call func args) =
