@@ -54,7 +54,7 @@ execAll statements = (mapM exec statements) >>= (const (return ()))
 
 eval :: Nodes.Expression -> InterpreterState Values.Value
 eval Nodes.NoneLiteral = return Values.None
-eval (Nodes.Literal value) = return (Values.IntegerValue value)
+eval (Nodes.IntegerLiteral value) = return (Values.IntegerValue value)
 eval (Nodes.BooleanLiteral value) = return (Values.BooleanValue value)
 eval (Nodes.Call func args) = do
     funcValue <- eval func
@@ -87,5 +87,5 @@ describeExpressionType :: Nodes.Expression -> String
 describeExpressionType (Nodes.Call _ _) = "function call"
 describeExpressionType Nodes.NoneLiteral = "None"
 describeExpressionType (Nodes.BooleanLiteral _) = "boolean literal"
-describeExpressionType (Nodes.Literal _) = "integer literal"
+describeExpressionType (Nodes.IntegerLiteral _) = "integer literal"
 describeExpressionType (Nodes.VariableReference _) = "variable reference"

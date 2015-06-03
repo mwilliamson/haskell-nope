@@ -4,10 +4,11 @@ data Expression =
     NoneLiteral |
     BooleanLiteral Bool |
     VariableReference VariableDeclaration |
-    Literal Integer |
+    IntegerLiteral Integer |
     Call Expression [Expression]
     deriving (Show, Eq)
-    
+
+
 data Module = Module [Statement]    
     deriving (Show, Eq)
 

@@ -19,7 +19,7 @@ boolTestCase name expression expectedBoolValue =
 interpreterTestSuite :: TestTree
 interpreterTestSuite = testGroup "InterpreterTests" [
     programTestCase "Printing integer prints that integer to stdout" 
-        [Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.Literal 42])]
+        [Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.IntegerLiteral (42 :: Integer)])]
         "42\n",
         
     programTestCase "Cannot call literal" 
@@ -30,14 +30,14 @@ interpreterTestSuite = testGroup "InterpreterTests" [
         boolTestCase "bool(None) is False" Nodes.NoneLiteral "False",
         boolTestCase "bool(False) is False" (Nodes.BooleanLiteral False) "False",
         boolTestCase "bool(True) is False" (Nodes.BooleanLiteral True) "True",
-        boolTestCase "bool(0) is False" (Nodes.Literal 0) "False",
-        boolTestCase "bool(42) is True" (Nodes.Literal 42) "True"
+        boolTestCase "bool(0) is False" (Nodes.IntegerLiteral 0) "False",
+        boolTestCase "bool(42) is True" (Nodes.IntegerLiteral 42) "True"
     ],
     
     testGroup "assignment" [
         programTestCase "Variable can be referenced after it has been set"
             [
-                (Nodes.Assign reference (Nodes.Literal 42)),
+                (Nodes.Assign reference (Nodes.IntegerLiteral 42)),
                 printStatement reference
                 ]
             "42\n",
@@ -52,15 +52,15 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     testGroup "if then else" [
         programTestCase "True branch is executed if condition is True" [
             (Nodes.If (Nodes.BooleanLiteral True)
-                [Nodes.Assign reference (Nodes.Literal 1)]
-                [Nodes.Assign reference (Nodes.Literal 2)]),
+                [Nodes.Assign reference (Nodes.IntegerLiteral 1)]
+                [Nodes.Assign reference (Nodes.IntegerLiteral 2)]),
             printStatement reference
         ] "1\n",
         
         programTestCase "False branch is executed if condition is False" [
             (Nodes.If (Nodes.BooleanLiteral False)
-                [Nodes.Assign reference (Nodes.Literal 1)]
-                [Nodes.Assign reference (Nodes.Literal 2)]),
+                [Nodes.Assign reference (Nodes.IntegerLiteral 1)]
+                [Nodes.Assign reference (Nodes.IntegerLiteral 2)]),
             printStatement reference
         ] "2\n",
         
@@ -75,7 +75,7 @@ interpreterTestSuite = testGroup "InterpreterTests" [
         
     programTestCase "Previous writes to stdout are retained when error is raised"
         [
-            printStatement (Nodes.Literal 42),
+            printStatement (Nodes.IntegerLiteral 42),
             printStatement reference
             ]
         "42\nException: undefined variable: 'x'",
@@ -83,7 +83,7 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     programTestCase "Following writes to stdout are ignored when error is raised"
         [
             printStatement reference,
-            printStatement (Nodes.Literal 42)
+            printStatement (Nodes.IntegerLiteral 42)
             ]
         "Exception: undefined variable: 'x'"
     ]

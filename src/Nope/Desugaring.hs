@@ -53,7 +53,7 @@ desugarExpression (Nope.Literal literal) = desugarLiteral literal
 
 desugarLiteral :: Nope.Literal -> CousCous.Expression
 desugarLiteral Nope.NoneLiteral = CousCous.NoneLiteral
-desugarLiteral (Nope.IntegerLiteral value) = CousCous.Literal value
+desugarLiteral (Nope.IntegerLiteral value) = CousCous.IntegerLiteral value
 
 desugarVariableDeclaration :: VariableDeclaration -> CousCous.VariableDeclaration
 desugarVariableDeclaration (VariableDeclaration name declarationId) =
