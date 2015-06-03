@@ -37,8 +37,8 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     testGroup "assignment" [
         programTestCase "Variable can be referenced after it has been set"
             [
-                (Nodes.Assign (Nodes.VariableReference declaration) (Nodes.Literal 42)),
-                (Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.VariableReference declaration]))
+                (Nodes.Assign reference (Nodes.Literal 42)),
+                printStatement reference
                 ]
             "42\n",
         
@@ -70,20 +70,20 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     ],
         
     programTestCase "Attempting to access undefined variable raises error"
-        [Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.VariableReference declaration])]
+        [printStatement reference]
         "Exception: undefined variable: 'x'",
         
     programTestCase "Previous writes to stdout are retained when error is raised"
         [
-            Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.Literal 42]),
-            Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.VariableReference declaration])
+            printStatement (Nodes.Literal 42),
+            printStatement reference
             ]
         "42\nException: undefined variable: 'x'",
         
     programTestCase "Following writes to stdout are ignored when error is raised"
         [
-            Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.VariableReference declaration]),
-            Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.Literal 42])
+            printStatement reference,
+            printStatement (Nodes.Literal 42)
             ]
         "Exception: undefined variable: 'x'"
     ]
