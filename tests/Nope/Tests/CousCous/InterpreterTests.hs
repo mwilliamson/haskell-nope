@@ -68,6 +68,13 @@ interpreterTestSuite = testGroup "InterpreterTests" [
             (Nodes.If Nodes.NoneLiteral [] [])
         ] "Exception: condition must be bool"
     ],
+    
+    testGroup "function definition" [
+        programTestCase "Function returns None by default" [
+            (Nodes.FunctionDefinition (Nodes.VariableDeclaration "f" 1) []),
+            printStatement (Nodes.Call (Nodes.VariableReference (Nodes.VariableDeclaration "f" 1)) [])
+        ] "None\n"
+    ],
         
     programTestCase "Attempting to access undefined variable raises error"
         [printStatement reference]

@@ -15,7 +15,8 @@ data Module = Module [Statement]
 data Statement =
     ExpressionStatement Expression |
     Assign Expression Expression |
-    If Expression [Statement] [Statement]
+    If Expression [Statement] [Statement] |
+    FunctionDefinition VariableDeclaration [Statement]
     deriving (Show, Eq)
 
 data VariableDeclaration =

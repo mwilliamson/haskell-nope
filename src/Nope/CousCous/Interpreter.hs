@@ -33,21 +33,33 @@ execModule (Nodes.Module statements) =
         \message -> write ("Exception: " ++ message)
 
 exec :: Nodes.Statement -> InterpreterState ()
+
 exec (Nodes.ExpressionStatement expression) = do
     _ <- eval expression
     return ()
+
 exec (Nodes.Assign (Nodes.VariableReference declaration) valueExpression) = do
     value <- eval valueExpression
-    modify $ \state -> 
-        let variables' = Map.insert declaration value (variables state)
-        in state {variables = variables'}
-exec (Nodes.Assign func _) = throwError ("cannot assign to " ++ (describeExpressionType func))
+    assign declaration value
+
+exec (Nodes.Assign func _) =
+    throwError ("cannot assign to " ++ (describeExpressionType func))
+
 exec (Nodes.If conditionExpression trueBranch falseBranch) = do
     conditionValue <- eval conditionExpression
     case conditionValue of
         Values.BooleanValue True -> execAll trueBranch
         Values.BooleanValue False -> execAll falseBranch
         _ -> throwError "condition must be bool"
+
+exec (Nodes.FunctionDefinition declaration statements) =
+    let (Nodes.VariableDeclaration name _) = declaration
+    in assign declaration (Values.Function name statements)
+
+assign :: Nodes.VariableDeclaration -> Values.Value -> InterpreterState ()
+assign declaration value = modify $ \state -> 
+    let variables' = Map.insert declaration value (variables state)
+    in state {variables = variables'}
 
 execAll :: [Nodes.Statement] -> InterpreterState ()
 execAll statements = (mapM exec statements) >>= (const (return ()))
@@ -67,13 +79,19 @@ eval (Nodes.VariableReference declaration) = do
         Nothing -> throwError ("undefined variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
 
 call :: Values.Value -> [Values.Value] -> InterpreterState Values.Value
+
+call (Values.Function _ _) [] = do
+    return Values.None
+
 call Values.Print values = do
     write ((intercalate " " (map Values.str values)) ++ "\n")
     return Values.None
+
 call Values.Bool [Values.None] = return Values.false
 call Values.Bool [Values.BooleanValue False] = return Values.false
 call Values.Bool [Values.IntegerValue 0] = return Values.false
 call Values.Bool [_] = return Values.true
+
 call func _ = throwError ((Values.str func) ++ " is not callable")
 
 write :: [Char] -> InterpreterState ()
