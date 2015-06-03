@@ -54,8 +54,7 @@ call :: Values.Value -> [Values.Value] -> InterpreterState Values.Value
 call Values.Print values = do
     write ((intercalate " " (map Values.str values)) ++ "\n")
     return Values.None
-    -- TODO: error
-call _ _ = undefined
+call func _ = throwError ((Values.str func) ++ " is not callable")
 
 write :: [Char] -> InterpreterState ()
 write value = modify $ \state ->

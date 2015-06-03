@@ -16,6 +16,10 @@ interpreterTestSuite = testGroup "InterpreterTests" [
         [Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.Literal 42])]
         "42\n",
         
+    programTestCase "Cannot call literal" 
+        [Nodes.ExpressionStatement (Nodes.Call (Nodes.NoneLiteral) [])]
+        "Exception: None is not callable",
+        
     programTestCase "Variable can be referenced after it has been set"
         [
             (Nodes.Assign (Nodes.VariableReference declaration) (Nodes.Literal 42)),
