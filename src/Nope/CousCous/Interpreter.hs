@@ -13,7 +13,13 @@ type Variables = Map.Map Nodes.VariableDeclaration Values.Value
 type InterpreterState = ExceptT String (State Environment)
 
 initialState :: Environment
-initialState = Environment {stdout = "", variables = Map.singleton (Nodes.Builtin "print") Values.Print}
+initialState = Environment {
+    stdout = "",
+    variables = Map.fromList [
+        ((Nodes.Builtin "print"), Values.Print),
+        ((Nodes.Builtin "bool"), Values.Bool)
+    ]
+}
 
 run :: Nodes.Module -> Environment
 run moduleNode =
@@ -40,6 +46,7 @@ exec (Nodes.Assign func _) = throwError ("cannot assign to " ++ (describeExpress
 eval :: Nodes.Expression -> InterpreterState Values.Value
 eval Nodes.NoneLiteral = return Values.None
 eval (Nodes.Literal value) = return (Values.IntegerValue value)
+eval (Nodes.BooleanLiteral value) = return (Values.BooleanValue value)
 eval (Nodes.Call func args) = do
     funcValue <- eval func
     argValues <- evalAll args
@@ -54,6 +61,10 @@ call :: Values.Value -> [Values.Value] -> InterpreterState Values.Value
 call Values.Print values = do
     write ((intercalate " " (map Values.str values)) ++ "\n")
     return Values.None
+call Values.Bool [Values.None] = return Values.false
+call Values.Bool [Values.BooleanValue False] = return Values.false
+call Values.Bool [Values.IntegerValue 0] = return Values.false
+call Values.Bool [_] = return Values.true
 call func _ = throwError ((Values.str func) ++ " is not callable")
 
 write :: [Char] -> InterpreterState ()
@@ -66,5 +77,6 @@ evalAll = mapM eval
 describeExpressionType :: Nodes.Expression -> String
 describeExpressionType (Nodes.Call _ _) = "function call"
 describeExpressionType Nodes.NoneLiteral = "None"
+describeExpressionType (Nodes.BooleanLiteral _) = "boolean literal"
 describeExpressionType (Nodes.Literal _) = "integer literal"
 describeExpressionType (Nodes.VariableReference _) = "variable reference"

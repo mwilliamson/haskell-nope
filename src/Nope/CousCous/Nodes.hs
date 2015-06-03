@@ -2,6 +2,7 @@ module Nope.CousCous.Nodes where
 
 data Expression =
     NoneLiteral |
+    BooleanLiteral Bool |
     VariableReference VariableDeclaration |
     Literal Integer |
     Call Expression [Expression]

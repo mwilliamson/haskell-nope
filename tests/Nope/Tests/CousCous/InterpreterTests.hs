@@ -1,4 +1,4 @@
-module Nope.Tests.CousCous.InterpreterTests where
+module Nope.Tests.CousCous.InterpreterTests (interpreterTestSuite) where
 
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -10,6 +10,12 @@ import qualified Nope.CousCous.Interpreter as Interpreter
 declaration = (Nodes.VariableDeclaration "x" 1)
 
 
+boolTestCase name expression expectedBoolValue =
+    let boolExpression = (Nodes.Call (Nodes.builtin "bool") [expression])
+        printExpression = (Nodes.Call (Nodes.builtin "print") [boolExpression])
+    in programTestCase name [Nodes.ExpressionStatement printExpression] (expectedBoolValue ++ "\n")
+
+
 interpreterTestSuite :: TestTree
 interpreterTestSuite = testGroup "InterpreterTests" [
     programTestCase "Printing integer prints that integer to stdout" 
@@ -19,6 +25,14 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     programTestCase "Cannot call literal" 
         [Nodes.ExpressionStatement (Nodes.Call (Nodes.NoneLiteral) [])]
         "Exception: None is not callable",
+    
+    testGroup "bool(value)" [
+        boolTestCase "bool(None) is False" Nodes.NoneLiteral "False",
+        boolTestCase "bool(False) is False" (Nodes.BooleanLiteral False) "False",
+        boolTestCase "bool(True) is False" (Nodes.BooleanLiteral True) "True",
+        boolTestCase "bool(0) is False" (Nodes.Literal 0) "False",
+        boolTestCase "bool(42) is True" (Nodes.Literal 42) "True"
+    ],
     
     testGroup "assignment" [
         programTestCase "Variable can be referenced after it has been set"
