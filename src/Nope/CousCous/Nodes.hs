@@ -16,7 +16,8 @@ data Statement =
     ExpressionStatement Expression |
     Assign Expression Expression |
     If Expression [Statement] [Statement] |
-    FunctionDefinition VariableDeclaration [Statement]
+    FunctionDefinition VariableDeclaration [Statement] |
+    Return Expression
     deriving (Show, Eq)
 
 data VariableDeclaration =

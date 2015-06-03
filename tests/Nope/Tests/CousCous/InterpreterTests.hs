@@ -73,7 +73,14 @@ interpreterTestSuite = testGroup "InterpreterTests" [
         programTestCase "Function returns None by default" [
             (Nodes.FunctionDefinition (Nodes.VariableDeclaration "f" 1) []),
             printStatement (Nodes.Call (Nodes.VariableReference (Nodes.VariableDeclaration "f" 1)) [])
-        ] "None\n"
+        ] "None\n",
+        
+        programTestCase "Function returns value in return statement" [
+            (Nodes.FunctionDefinition (Nodes.VariableDeclaration "f" 1) [
+                Nodes.Return (Nodes.IntegerLiteral 42)
+            ]),
+            printStatement (Nodes.Call (Nodes.VariableReference (Nodes.VariableDeclaration "f" 1)) [])
+        ] "42\n"
     ],
         
     programTestCase "Attempting to access undefined variable raises error"

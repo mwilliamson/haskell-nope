@@ -10,7 +10,9 @@ import qualified Nope.CousCous.Values as Values
 
 data Environment = Environment { stdout :: String, variables :: Variables}
 type Variables = Map.Map Nodes.VariableDeclaration Values.Value
-type InterpreterState = ExceptT String (State Environment)
+type InterpreterState = ExceptT EarlyExit (State Environment)
+
+data EarlyExit = RaisedException String | ReturnValue Values.Value
 
 initialState :: Environment
 initialState = Environment {
@@ -29,8 +31,13 @@ run moduleNode =
 
 execModule :: Nodes.Module -> InterpreterState ()
 execModule (Nodes.Module statements) =
-    (execAll statements) `catchError`
-        \message -> write ("Exception: " ++ message)
+    handleEscapedException (execAll statements)
+
+
+handleEscapedException :: InterpreterState () -> InterpreterState ()
+handleEscapedException state = state `catchError` \earlyExit -> case earlyExit of
+        (RaisedException message) -> write ("Exception: " ++ message)
+        _ -> state
 
 exec :: Nodes.Statement -> InterpreterState ()
 
@@ -43,18 +50,22 @@ exec (Nodes.Assign (Nodes.VariableReference declaration) valueExpression) = do
     assign declaration value
 
 exec (Nodes.Assign func _) =
-    throwError ("cannot assign to " ++ (describeExpressionType func))
+    raise ("cannot assign to " ++ (describeExpressionType func))
 
 exec (Nodes.If conditionExpression trueBranch falseBranch) = do
     conditionValue <- eval conditionExpression
     case conditionValue of
         Values.BooleanValue True -> execAll trueBranch
         Values.BooleanValue False -> execAll falseBranch
-        _ -> throwError "condition must be bool"
+        _ -> raise "condition must be bool"
 
 exec (Nodes.FunctionDefinition declaration statements) =
     let (Nodes.VariableDeclaration name _) = declaration
     in assign declaration (Values.Function name statements)
+
+exec (Nodes.Return expression) =
+    eval expression >>= (throwError . ReturnValue)
+
 
 assign :: Nodes.VariableDeclaration -> Values.Value -> InterpreterState ()
 assign declaration value = modify $ \state -> 
@@ -76,12 +87,13 @@ eval (Nodes.VariableReference declaration) = do
     state <- get
     case Map.lookup declaration (variables state) of
         (Just value) -> return $ value
-        Nothing -> throwError ("undefined variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
+        Nothing -> raise ("undefined variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
 
 call :: Values.Value -> [Values.Value] -> InterpreterState Values.Value
 
-call (Values.Function _ _) [] = do
-    return Values.None
+call (Values.Function _ statements) [] =
+    consumeReturnValue (execAll statements)
+    
 
 call Values.Print values = do
     write ((intercalate " " (map Values.str values)) ++ "\n")
@@ -92,7 +104,19 @@ call Values.Bool [Values.BooleanValue False] = return Values.false
 call Values.Bool [Values.IntegerValue 0] = return Values.false
 call Values.Bool [_] = return Values.true
 
-call func _ = throwError ((Values.str func) ++ " is not callable")
+call func _ = raise ((Values.str func) ++ " is not callable")
+
+raise :: String -> InterpreterState a
+raise = throwError . RaisedException
+
+consumeReturnValue :: InterpreterState a -> InterpreterState Values.Value
+consumeReturnValue state =
+    let noneState = state >>= (const (return Values.None))
+    in noneState `catchError` \earlyExit ->
+    case earlyExit of
+        (ReturnValue value) -> return $ value
+        _ -> noneState
+    
 
 write :: [Char] -> InterpreterState ()
 write value = modify $ \state ->
