@@ -19,19 +19,21 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     programTestCase "Cannot call literal" 
         [Nodes.ExpressionStatement (Nodes.Call (Nodes.NoneLiteral) [])]
         "Exception: None is not callable",
+    
+    testGroup "assignment" [
+        programTestCase "Variable can be referenced after it has been set"
+            [
+                (Nodes.Assign (Nodes.VariableReference declaration) (Nodes.Literal 42)),
+                (Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.VariableReference declaration]))
+                ]
+            "42\n",
         
-    programTestCase "Variable can be referenced after it has been set"
-        [
-            (Nodes.Assign (Nodes.VariableReference declaration) (Nodes.Literal 42)),
-            (Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.VariableReference declaration]))
-            ]
-        "42\n",
-        
-    programTestCase "Cannot assign to a function call"
-        [
-            Nodes.Assign (Nodes.Call (Nodes.builtin "print") []) Nodes.NoneLiteral
-            ]
-        "Exception: cannot assign to function call",
+        programTestCase "Cannot assign to a function call"
+            [
+                Nodes.Assign (Nodes.Call (Nodes.builtin "print") []) Nodes.NoneLiteral
+                ]
+            "Exception: cannot assign to function call"
+    ],
         
     programTestCase "Attempting to access undefined variable raises error"
         [Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.VariableReference declaration])]
