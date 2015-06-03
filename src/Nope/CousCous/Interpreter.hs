@@ -35,8 +35,7 @@ exec (Nodes.Assign (Nodes.VariableReference declaration) valueExpression) = do
     modify $ \state -> 
         let variables' = Map.insert declaration value (variables state)
         in state {variables = variables'}
--- TODO: error
-exec (Nodes.Assign _ _) = undefined
+exec (Nodes.Assign func _) = throwError ("cannot assign to " ++ (describeExpressionType func))
 
 eval :: Nodes.Expression -> InterpreterState Values.Value
 eval Nodes.NoneLiteral = return Values.None
@@ -64,3 +63,9 @@ write value = modify $ \state ->
 
 evalAll :: [Nodes.Expression] -> InterpreterState [Values.Value]
 evalAll = mapM eval
+
+describeExpressionType :: Nodes.Expression -> String
+describeExpressionType (Nodes.Call _ _) = "function call"
+describeExpressionType Nodes.NoneLiteral = "None"
+describeExpressionType (Nodes.Literal _) = "integer literal"
+describeExpressionType (Nodes.VariableReference _) = "variable reference"

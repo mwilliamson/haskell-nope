@@ -23,6 +23,12 @@ interpreterTestSuite = testGroup "InterpreterTests" [
             ]
         "42\n",
         
+    programTestCase "Cannot assign to a function call"
+        [
+            Nodes.Assign (Nodes.Call (Nodes.builtin "print") []) Nodes.NoneLiteral
+            ]
+        "Exception: cannot assign to function call",
+        
     programTestCase "Attempting to access undefined variable raises error"
         [Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.VariableReference declaration])]
         "Exception: undefined variable: 'x'",
