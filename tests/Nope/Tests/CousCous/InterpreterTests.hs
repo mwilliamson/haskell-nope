@@ -7,8 +7,8 @@ import qualified Nope.CousCous.Nodes as Nodes
 import qualified Nope.CousCous.Interpreter as Interpreter
 
 
-declaration = (Nodes.VariableDeclaration "x" 1)
-
+declaration = Nodes.VariableDeclaration "x" 1
+reference = Nodes.VariableReference declaration
 
 boolTestCase name expression expectedBoolValue =
     let boolExpression = (Nodes.Call (Nodes.builtin "bool") [expression])
@@ -48,6 +48,26 @@ interpreterTestSuite = testGroup "InterpreterTests" [
                 ]
             "Exception: cannot assign to function call"
     ],
+    
+    testGroup "if then else" [
+        programTestCase "True branch is executed if condition is True" [
+            (Nodes.If (Nodes.BooleanLiteral True)
+                [Nodes.Assign reference (Nodes.Literal 1)]
+                [Nodes.Assign reference (Nodes.Literal 2)]),
+            printStatement reference
+        ] "1\n",
+        
+        programTestCase "False branch is executed if condition is False" [
+            (Nodes.If (Nodes.BooleanLiteral False)
+                [Nodes.Assign reference (Nodes.Literal 1)]
+                [Nodes.Assign reference (Nodes.Literal 2)]),
+            printStatement reference
+        ] "2\n",
+        
+        programTestCase "Error if condition is not boolean" [
+            (Nodes.If Nodes.NoneLiteral [] [])
+        ] "Exception: condition must be bool"
+    ],
         
     programTestCase "Attempting to access undefined variable raises error"
         [Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.VariableReference declaration])]
@@ -73,3 +93,7 @@ programTestCase :: [Char] -> [Nodes.Statement] -> String -> TestTree
 programTestCase testName ast expectedStdout =
     let state = (Interpreter.run (Nodes.Module ast))
     in testCase testName $ expectedStdout @=? (Interpreter.stdout state)
+
+
+printStatement expression =
+    Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [expression])

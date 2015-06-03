@@ -29,7 +29,7 @@ run moduleNode =
 
 execModule :: Nodes.Module -> InterpreterState ()
 execModule (Nodes.Module statements) =
-    ((mapM exec statements) >>= (const (return ()))) `catchError`
+    (execAll statements) `catchError`
         \message -> write ("Exception: " ++ message)
 
 exec :: Nodes.Statement -> InterpreterState ()
@@ -42,6 +42,15 @@ exec (Nodes.Assign (Nodes.VariableReference declaration) valueExpression) = do
         let variables' = Map.insert declaration value (variables state)
         in state {variables = variables'}
 exec (Nodes.Assign func _) = throwError ("cannot assign to " ++ (describeExpressionType func))
+exec (Nodes.If conditionExpression trueBranch falseBranch) = do
+    conditionValue <- eval conditionExpression
+    case conditionValue of
+        Values.BooleanValue True -> execAll trueBranch
+        Values.BooleanValue False -> execAll falseBranch
+        _ -> throwError "condition must be bool"
+
+execAll :: [Nodes.Statement] -> InterpreterState ()
+execAll statements = (mapM exec statements) >>= (const (return ()))
 
 eval :: Nodes.Expression -> InterpreterState Values.Value
 eval Nodes.NoneLiteral = return Values.None

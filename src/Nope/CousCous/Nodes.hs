@@ -13,7 +13,8 @@ data Module = Module [Statement]
 
 data Statement =
     ExpressionStatement Expression |
-    Assign Expression Expression
+    Assign Expression Expression |
+    If Expression [Statement] [Statement]
     deriving (Show, Eq)
 
 data VariableDeclaration =
