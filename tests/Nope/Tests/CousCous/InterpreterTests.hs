@@ -80,7 +80,23 @@ interpreterTestSuite = testGroup "InterpreterTests" [
                 Nodes.Return (Nodes.IntegerLiteral 42)
             ]),
             printStatement (Nodes.Call (Nodes.VariableReference (Nodes.VariableDeclaration "f" 1)) [])
-        ] "42\n"
+        ] "42\n",
+        
+        programTestCase "Statements before return are executed" [
+            (Nodes.FunctionDefinition (Nodes.VariableDeclaration "f" 1) [
+                printStatement (Nodes.IntegerLiteral 42),
+                Nodes.Return Nodes.NoneLiteral
+            ]),
+            Nodes.ExpressionStatement (Nodes.Call (Nodes.VariableReference (Nodes.VariableDeclaration "f" 1)) [])
+        ] "42\n",
+        
+        programTestCase "Statements after return are not executed" [
+            (Nodes.FunctionDefinition (Nodes.VariableDeclaration "f" 1) [
+                Nodes.Return Nodes.NoneLiteral,
+                printStatement (Nodes.IntegerLiteral 42)
+            ]),
+            Nodes.ExpressionStatement (Nodes.Call (Nodes.VariableReference (Nodes.VariableDeclaration "f" 1)) [])
+        ] ""
     ],
         
     programTestCase "Attempting to access undefined variable raises error"
