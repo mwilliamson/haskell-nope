@@ -1,5 +1,7 @@
 module Nope.Tests.CousCous.InterpreterTests (interpreterTestSuite) where
 
+import Data.Char (ord)
+
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -7,8 +9,11 @@ import qualified Nope.CousCous.Nodes as Nodes
 import qualified Nope.CousCous.Interpreter as Interpreter
 
 
-declaration = Nodes.VariableDeclaration "x" 1
+declaration = decl "x"
 reference = Nodes.VariableReference declaration
+
+decl [name] = Nodes.VariableDeclaration [name] (ord name)
+ref name = Nodes.VariableReference (decl name)
 
 boolTestCase name expression expectedBoolValue =
     let boolExpression = (Nodes.Call (Nodes.builtin "bool") [expression])
@@ -71,31 +76,31 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     
     testGroup "function definition" [
         programTestCase "Function returns None by default" [
-            (Nodes.FunctionDefinition (Nodes.VariableDeclaration "f" 1) []),
-            printStatement (Nodes.Call (Nodes.VariableReference (Nodes.VariableDeclaration "f" 1)) [])
+            (Nodes.FunctionDefinition (decl "f") []),
+            printStatement (Nodes.Call (ref "f") [])
         ] "None\n",
         
         programTestCase "Function returns value in return statement" [
-            (Nodes.FunctionDefinition (Nodes.VariableDeclaration "f" 1) [
+            (Nodes.FunctionDefinition (decl "f") [
                 Nodes.Return (Nodes.IntegerLiteral 42)
             ]),
-            printStatement (Nodes.Call (Nodes.VariableReference (Nodes.VariableDeclaration "f" 1)) [])
+            printStatement (Nodes.Call (ref "f") [])
         ] "42\n",
         
         programTestCase "Statements before return are executed" [
-            (Nodes.FunctionDefinition (Nodes.VariableDeclaration "f" 1) [
+            (Nodes.FunctionDefinition (decl "f") [
                 printStatement (Nodes.IntegerLiteral 42),
                 Nodes.Return Nodes.NoneLiteral
             ]),
-            Nodes.ExpressionStatement (Nodes.Call (Nodes.VariableReference (Nodes.VariableDeclaration "f" 1)) [])
+            Nodes.ExpressionStatement (Nodes.Call (ref "f") [])
         ] "42\n",
         
         programTestCase "Statements after return are not executed" [
-            (Nodes.FunctionDefinition (Nodes.VariableDeclaration "f" 1) [
+            (Nodes.FunctionDefinition (decl "f") [
                 Nodes.Return Nodes.NoneLiteral,
                 printStatement (Nodes.IntegerLiteral 42)
             ]),
-            Nodes.ExpressionStatement (Nodes.Call (Nodes.VariableReference (Nodes.VariableDeclaration "f" 1)) [])
+            Nodes.ExpressionStatement (Nodes.Call (ref "f") [])
         ] ""
     ],
         
