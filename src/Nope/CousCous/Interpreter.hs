@@ -1,7 +1,7 @@
 module Nope.CousCous.Interpreter where
 
 import Data.List (intercalate)
-import Control.Monad.State (State, modify, get, execState)
+import Control.Monad.State (State, modify, get, put, execState)
 import Control.Monad.Except (ExceptT, throwError, catchError, runExceptT)
 import qualified Data.Map.Strict as Map
 
@@ -59,9 +59,9 @@ exec (Nodes.If conditionExpression trueBranch falseBranch) = do
         Values.BooleanValue False -> execAll falseBranch
         _ -> raise "condition must be bool"
 
-exec (Nodes.FunctionDefinition declaration statements) =
+exec (Nodes.FunctionDefinition declaration scope statements) =
     let (Nodes.VariableDeclaration name _) = declaration
-    in assign declaration (Values.Function name statements)
+    in assign declaration (Values.Function name scope statements)
 
 exec (Nodes.Return expression) =
     eval expression >>= (throwError . ReturnValue)
@@ -91,8 +91,12 @@ eval (Nodes.VariableReference declaration) = do
 
 call :: Values.Value -> [Values.Value] -> InterpreterState Values.Value
 
-call (Values.Function _ statements) [] =
-    consumeReturnValue (execAll statements)
+call (Values.Function _ _ statements) [] = do
+    outerState <- get
+    value <- consumeReturnValue (execAll statements)
+    innerState <- get
+    put innerState {variables = variables outerState}
+    return value
     
 
 call Values.Print values = do

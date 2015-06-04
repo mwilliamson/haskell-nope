@@ -76,19 +76,19 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     
     testGroup "function definition" [
         programTestCase "Function returns None by default" [
-            (Nodes.FunctionDefinition (decl "f") []),
+            (Nodes.FunctionDefinition (decl "f") [] []),
             printStatement (Nodes.Call (ref "f") [])
         ] "None\n",
         
         programTestCase "Function returns value in return statement" [
-            (Nodes.FunctionDefinition (decl "f") [
+            (Nodes.FunctionDefinition (decl "f") [] [
                 Nodes.Return (Nodes.IntegerLiteral 42)
             ]),
             printStatement (Nodes.Call (ref "f") [])
         ] "42\n",
         
         programTestCase "Statements before return are executed" [
-            (Nodes.FunctionDefinition (decl "f") [
+            (Nodes.FunctionDefinition (decl "f") [] [
                 printStatement (Nodes.IntegerLiteral 42),
                 Nodes.Return Nodes.NoneLiteral
             ]),
@@ -96,12 +96,21 @@ interpreterTestSuite = testGroup "InterpreterTests" [
         ] "42\n",
         
         programTestCase "Statements after return are not executed" [
-            (Nodes.FunctionDefinition (decl "f") [
+            (Nodes.FunctionDefinition (decl "f") [] [
                 Nodes.Return Nodes.NoneLiteral,
                 printStatement (Nodes.IntegerLiteral 42)
             ]),
             Nodes.ExpressionStatement (Nodes.Call (ref "f") [])
-        ] ""
+        ] "",
+        
+        programTestCase "Functions create their own scope" [
+            Nodes.Assign (ref "x") (Nodes.IntegerLiteral 42),
+            (Nodes.FunctionDefinition (decl "f") [decl "x"] [
+                Nodes.Assign (ref "x") (Nodes.IntegerLiteral 24)
+            ]),
+            Nodes.ExpressionStatement (Nodes.Call (ref "f") []),
+            printStatement (ref "x")
+        ] "42\n"
     ],
         
     programTestCase "Attempting to access undefined variable raises error"

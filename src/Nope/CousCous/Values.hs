@@ -7,7 +7,7 @@ data Value =
     None |
     BooleanValue Bool |
     IntegerValue Integer |
-    Function String [Statement] |
+    Function String [VariableDeclaration] [Statement] |
     Print |
     Bool
 
@@ -25,4 +25,4 @@ str (BooleanValue False) = "False"
 str (IntegerValue value) = show value
 str Print = "<built-in function print>"
 str Bool = "<class 'bool'>"
-str (Function name _) = "<function " ++ name ++ ">"
+str (Function name _ _) = "<function " ++ name ++ ">"
