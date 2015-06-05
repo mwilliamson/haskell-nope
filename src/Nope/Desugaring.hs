@@ -1,31 +1,52 @@
 module Nope.Desugaring (desugar) where
 
-import Control.Monad.State (State, get, put, evalState)
+import Control.Monad.State (State, get, put, modify, evalState)
 
 import qualified Nope.Nodes as Nope
 import qualified Nope.CousCous.Nodes as CousCous
 import Nope.NameResolution
 
-type Counter = State Int
+data DesugarState = DesugarState {
+    desugarStateTemporaryIndex :: Int,
+    desugarStateTemporaryStack:: [[CousCous.VariableDeclaration]]
+}
+type DesugarStateM = State DesugarState
 
 desugar :: ResolvedModule -> CousCous.Module
 desugar nopeModule =
-    evalState (desugarModule nopeModule) 1
+    evalState (desugarModule nopeModule) (DesugarState 1 [])
 
-desugarModule :: ResolvedModule -> Counter CousCous.Module
+desugarModule :: ResolvedModule -> DesugarStateM CousCous.Module
 desugarModule nopeModule = do
+    pushStackFrame []
     statements <- mapM desugarStatement (Nope.statements nopeModule)
-    counter <- get
-    let temporaryDeclarations = map CousCous.Temporary (enumFromTo 1 counter)
-        declarations = (declarationsInModule nopeModule) ++ temporaryDeclarations
+    temporaryDeclarations <- popStackFrame
+    let declarations = (declarationsInModule nopeModule) ++ temporaryDeclarations
     return $ CousCous.Module declarations (concat statements)
 
+
+pushStackFrame :: [CousCous.VariableDeclaration] -> DesugarStateM ()
+pushStackFrame frame = modify $ \state ->
+    state { desugarStateTemporaryStack = frame:(desugarStateTemporaryStack state) }
+
+popStackFrame :: DesugarStateM [CousCous.VariableDeclaration]
+popStackFrame = do
+    state <- get
+    let stack = desugarStateTemporaryStack state
+    put state { desugarStateTemporaryStack = tail stack }
+    return $ head stack
+
+declareVariable :: CousCous.VariableDeclaration -> DesugarStateM ()
+declareVariable declaration = do
+    declarations <- popStackFrame
+    pushStackFrame (declaration:declarations)
+    
 
 declarationsInModule :: ResolvedModule -> [CousCous.VariableDeclaration]
 declarationsInModule Nope.Module { Nope.moduleScope = moduleScope } =
     map desugarVariableDeclaration moduleScope
 
-desugarStatement :: ResolvedStatement -> Counter [CousCous.Statement]
+desugarStatement :: ResolvedStatement -> DesugarStateM [CousCous.Statement]
 desugarStatement (Nope.ExpressionStatement expression) =
     return $ [CousCous.ExpressionStatement $ desugarExpression expression]
 desugarStatement (Nope.Assign targets value) = do
@@ -40,15 +61,18 @@ desugarStatement (Nope.Assign targets value) = do
             in tmpAssignment : targetAssignments
 
 
-createTemporary :: Counter CousCous.Expression
+createTemporary :: DesugarStateM CousCous.Expression
 createTemporary = do
     index <- increment
-    return $ CousCous.VariableReference (CousCous.Temporary index)
+    let temporary = CousCous.Temporary index
+    declareVariable temporary
+    return $ CousCous.VariableReference temporary
 
-increment :: Counter Int
+increment :: DesugarStateM Int
 increment = do
-    index <- get
-    put (index + 1)
+    state <- get
+    let index = desugarStateTemporaryIndex state
+    put state { desugarStateTemporaryIndex = index + 1 }
     return index
 
 desugarExpression :: ResolvedExpression -> CousCous.Expression
