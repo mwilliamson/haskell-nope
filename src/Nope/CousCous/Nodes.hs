@@ -9,7 +9,7 @@ data Expression =
     deriving (Show, Eq)
 
 
-data Module = Module [Statement]    
+data Module = Module [VariableDeclaration] [Statement]
     deriving (Show, Eq)
 
 data Statement =

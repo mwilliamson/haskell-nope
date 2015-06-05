@@ -15,7 +15,15 @@ desugar nopeModule =
 desugarModule :: ResolvedModule -> Counter CousCous.Module
 desugarModule nopeModule = do
     statements <- mapM desugarStatement (Nope.statements nopeModule)
-    return $ CousCous.Module (concat statements)
+    counter <- get
+    let temporaryDeclarations = map CousCous.Temporary (enumFromTo 1 counter)
+        declarations = (declarationsInModule nopeModule) ++ temporaryDeclarations
+    return $ CousCous.Module declarations (concat statements)
+
+
+declarationsInModule :: ResolvedModule -> [CousCous.VariableDeclaration]
+declarationsInModule Nope.Module { Nope.moduleScope = moduleScope } =
+    map desugarVariableDeclaration moduleScope
 
 desugarStatement :: ResolvedStatement -> Counter [CousCous.Statement]
 desugarStatement (Nope.ExpressionStatement expression) =

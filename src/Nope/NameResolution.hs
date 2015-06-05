@@ -3,7 +3,7 @@ module Nope.NameResolution (ResolvedModule, ResolvedStatement, ResolvedExpressio
 import Control.Monad.State (State, get, put, evalState)
 import qualified Data.Map.Strict as Map
 
-import Nope.Parsing (ParsedModule)
+import Nope.Parsing (ParsedModule, ParsedStatement, ParsedExpression)
 import Nope.NameDeclaration
 import qualified Nope.Nodes as Nodes
 
@@ -15,7 +15,7 @@ data VariableDeclaration =
 
 type Environment = Map.Map String VariableDeclaration
 
-type ResolvedModule = Nodes.Module VariableDeclaration
+type ResolvedModule = Nodes.Module [VariableDeclaration] VariableDeclaration
 type ResolvedStatement = Nodes.Statement VariableDeclaration
 type ResolvedExpression = Nodes.Expression VariableDeclaration
 
@@ -23,42 +23,33 @@ type Counter = State Int
 
 resolveReferences :: ParsedModule -> ResolvedModule
 resolveReferences moduleNode =
-    evalState (resolveModuleReferences moduleNode) 1
+    evalState (resolveReferencesInModule moduleNode) 1
 
-resolveModuleReferences :: Nodes.Module String -> Counter ResolvedModule
-resolveModuleReferences moduleNode = do
+resolveReferencesInModule :: ParsedModule -> Counter ResolvedModule
+resolveReferencesInModule moduleNode = do
     scope <- scopeForModule moduleNode
-    return $ mapModuleExpressions (resolveExpressionReference scope) moduleNode
+    let statements = map (resolveReferencesInStatement scope) (Nodes.statements moduleNode)
+    return $ Nodes.Module (Map.elems scope) statements
 
+resolveReferencesInStatement :: Environment -> ParsedStatement -> ResolvedStatement
+resolveReferencesInStatement environment (Nodes.ExpressionStatement value) =
+    Nodes.ExpressionStatement (resolveReferencesInExpression environment value)
+resolveReferencesInStatement environment (Nodes.Assign targets value) =
+    Nodes.Assign (map (resolveReferencesInExpression environment) targets) (resolveReferencesInExpression environment value)
 
-resolveExpressionReference :: Environment -> Nodes.Expression String -> ResolvedExpression
-resolveExpressionReference env (Nodes.VariableReference name) =
+resolveReferencesInExpression :: Environment -> ParsedExpression -> ResolvedExpression
+resolveReferencesInExpression env (Nodes.VariableReference name) =
     case Map.lookup name env of
         Just variableDeclaration -> Nodes.VariableReference variableDeclaration
         Nothing -> Nodes.VariableReference (Builtin name)
-resolveExpressionReference scope (Nodes.Call func args) =
-    let func' = resolveExpressionReference scope func
-        args' = map (resolveExpressionReference scope) args
+resolveReferencesInExpression scope (Nodes.Call func args) =
+    let func' = resolveReferencesInExpression scope func
+        args' = map (resolveReferencesInExpression scope) args
     in Nodes.Call func' args'
-resolveExpressionReference _ (Nodes.Literal literal) = Nodes.Literal literal
+resolveReferencesInExpression _ (Nodes.Literal literal) = Nodes.Literal literal
 
 
-type ExpressionMap ref ref' = Nodes.Expression ref -> Nodes.Expression ref'
-
-
-mapModuleExpressions :: ExpressionMap ref ref' -> Nodes.Module ref -> Nodes.Module ref'
-mapModuleExpressions f moduleNode = 
-    let statements = Nodes.statements moduleNode
-        statements' = map (mapStatementExpressions f) statements
-    in moduleNode {Nodes.statements = statements'}
-
-mapStatementExpressions :: ExpressionMap ref ref'-> Nodes.Statement ref -> Nodes.Statement ref'
-mapStatementExpressions f (Nodes.ExpressionStatement value) =
-    Nodes.ExpressionStatement (f value)
-mapStatementExpressions f (Nodes.Assign targets value) =
-    Nodes.Assign (map f targets) (f value)
-
-scopeForModule :: ParsedModule -> Counter (Map.Map String VariableDeclaration)
+scopeForModule :: ParsedModule -> Counter Environment
 scopeForModule moduleNode = do
     let names = namesDeclaredInModule moduleNode
     declarations <- namesToDeclarations names
