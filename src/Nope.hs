@@ -16,4 +16,4 @@ runProgram source = do
     let resolvedModule = resolveReferences nopeModuleNode
     let cousCousModuleNode = desugar resolvedModule
         finalState = Interpreter.run cousCousModuleNode
-    return $ Stdout (Interpreter.stdout finalState)
+    return $ Stdout (Interpreter.interpreterStateStdout finalState)

@@ -8,46 +8,88 @@ import qualified Data.Map.Strict as Map
 import qualified Nope.CousCous.Nodes as Nodes
 import qualified Nope.CousCous.Values as Values
 
-data Environment = Environment { stdout :: String, variables :: Variables}
 type Variables = Map.Map Nodes.VariableDeclaration Values.Value
-type InterpreterState = ExceptT EarlyExit (State Environment)
+data StackFrame = StackFrame {
+    stackFrameStatements :: [Nodes.Statement],
+    stackFrameVariables :: Variables
+}
+data InterpreterState = InterpreterState {
+    interpreterStateStdout :: String,
+    interpreterStateStack :: [StackFrame]
+}
+type InterpreterStateM = ExceptT String (State InterpreterState)
 
-data EarlyExit = RaisedException String | ReturnValue Values.Value
-
-initialState :: Environment
-initialState = Environment {
-    stdout = "",
-    variables = Map.fromList [
-        ((Nodes.Builtin "print"), Values.Print),
-        ((Nodes.Builtin "bool"), Values.Bool)
+initialState :: InterpreterState
+initialState = InterpreterState {
+    interpreterStateStdout = "",
+    interpreterStateStack = [
+        StackFrame {
+            stackFrameVariables = Map.fromList [
+                ((Nodes.Builtin "print"), Values.Print),
+                ((Nodes.Builtin "bool"), Values.Bool)
+            ],
+            stackFrameStatements = []
+        }
     ]
 }
 
-run :: Nodes.Module -> Environment
+run :: Nodes.Module -> InterpreterState
 run moduleNode =
     let program = runExceptT (execModule moduleNode)
     in execState program initialState
 
 
-execModule :: Nodes.Module -> InterpreterState ()
-execModule (Nodes.Module statements) =
-    handleEscapedException (execAll statements)
+execModule :: Nodes.Module -> InterpreterStateM ()
+execModule moduleNode = do
+    pushStackFrameForModule moduleNode
+    execStack
 
+pushStackFrameForModule :: Nodes.Module -> InterpreterStateM ()
+pushStackFrameForModule (Nodes.Module statements) =
+    pushStackFrame statements
 
-handleEscapedException :: InterpreterState () -> InterpreterState ()
-handleEscapedException state = state `catchError` \earlyExit -> case earlyExit of
-        (RaisedException message) -> write ("Exception: " ++ message)
-        _ -> state
+pushStackFrame :: [Nodes.Statement] -> InterpreterStateM ()
+pushStackFrame statements = modify $ \state ->
+    let stack = interpreterStateStack state
+        frame = (head stack) { stackFrameStatements = statements }
+    in state {interpreterStateStack = frame:stack }
 
-exec :: Nodes.Statement -> InterpreterState ()
+execStack :: InterpreterStateM ()
+execStack = (do
+    -- TODO: handle invalid returns
+    execStackFrame
+    return ()
+    ) `catchError` \error -> write ("Exception: " ++ error)
+
+execStackFrame :: InterpreterStateM (Maybe Values.Value)
+execStackFrame = (do
+    state <- get
+    let frame:frames = interpreterStateStack state
+    case stackFrameStatements frame of
+        [] -> popStackFrame >>= \_ -> return Nothing
+        statement:statements -> do
+            let frame' = frame { stackFrameStatements = statements }
+            put $ state { interpreterStateStack = frame':frames }
+            returnValue <- exec statement
+            case returnValue of
+                Nothing -> execStackFrame
+                Just _ -> do { popStackFrame; return returnValue }
+    ) `catchError` \error -> do { popStackFrame; throwError error }
+
+popStackFrame :: InterpreterStateM ()
+popStackFrame = modify $ \state ->
+    state {interpreterStateStack = tail (interpreterStateStack state) }
+
+exec :: Nodes.Statement -> InterpreterStateM (Maybe Values.Value)
 
 exec (Nodes.ExpressionStatement expression) = do
     _ <- eval expression
-    return ()
+    return Nothing
 
 exec (Nodes.Assign (Nodes.VariableReference declaration) valueExpression) = do
     value <- eval valueExpression
     assign declaration value
+    return Nothing
 
 exec (Nodes.Assign func _) =
     raise ("cannot assign to " ++ (describeExpressionType func))
@@ -58,24 +100,29 @@ exec (Nodes.If conditionExpression trueBranch falseBranch) = do
         Values.BooleanValue True -> execAll trueBranch
         Values.BooleanValue False -> execAll falseBranch
         _ -> raise "condition must be bool"
+    return Nothing
 
-exec (Nodes.FunctionDefinition declaration scope statements) =
+exec (Nodes.FunctionDefinition declaration scope statements) = do
     let (Nodes.VariableDeclaration name _) = declaration
-    in assign declaration (Values.Function name scope statements)
+    assign declaration (Values.Function name scope statements)
+    return Nothing
 
-exec (Nodes.Return expression) =
-    eval expression >>= (throwError . ReturnValue)
+exec (Nodes.Return expression) = do
+    value <- eval expression
+    return (Just value)
 
 
-assign :: Nodes.VariableDeclaration -> Values.Value -> InterpreterState ()
-assign declaration value = modify $ \state -> 
-    let variables' = Map.insert declaration value (variables state)
-    in state {variables = variables'}
+assign :: Nodes.VariableDeclaration -> Values.Value -> InterpreterStateM ()
+assign declaration value = modify $ \state ->
+    let frame:frames = interpreterStateStack state
+        variables' = Map.insert declaration value (stackFrameVariables frame)
+        frame' = frame { stackFrameVariables = variables' }
+    in state { interpreterStateStack = frame':frames }
 
-execAll :: [Nodes.Statement] -> InterpreterState ()
+execAll :: [Nodes.Statement] -> InterpreterStateM ()
 execAll statements = (mapM exec statements) >>= (const (return ()))
 
-eval :: Nodes.Expression -> InterpreterState Values.Value
+eval :: Nodes.Expression -> InterpreterStateM Values.Value
 eval Nodes.NoneLiteral = return Values.None
 eval (Nodes.IntegerLiteral value) = return (Values.IntegerValue value)
 eval (Nodes.BooleanLiteral value) = return (Values.BooleanValue value)
@@ -85,18 +132,19 @@ eval (Nodes.Call func args) = do
     call funcValue argValues
 eval (Nodes.VariableReference declaration) = do
     state <- get
-    case Map.lookup declaration (variables state) of
+    let frame:frames = interpreterStateStack state
+    case Map.lookup declaration (stackFrameVariables frame) of
         (Just value) -> return $ value
         Nothing -> raise ("undefined variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
 
-call :: Values.Value -> [Values.Value] -> InterpreterState Values.Value
+call :: Values.Value -> [Values.Value] -> InterpreterStateM Values.Value
 
 call (Values.Function _ _ statements) [] = do
-    outerState <- get
-    value <- consumeReturnValue (execAll statements)
-    innerState <- get
-    put innerState {variables = variables outerState}
-    return value
+    pushStackFrame statements
+    returnValue <- execStackFrame
+    case returnValue of
+        Nothing -> return Values.None
+        Just value -> return value
     
 
 call Values.Print values = do
@@ -110,23 +158,15 @@ call Values.Bool [_] = return Values.true
 
 call func _ = raise ((Values.str func) ++ " is not callable")
 
-raise :: String -> InterpreterState a
-raise = throwError . RaisedException
-
-consumeReturnValue :: InterpreterState a -> InterpreterState Values.Value
-consumeReturnValue state =
-    let noneState = state >>= (const (return Values.None))
-    in noneState `catchError` \earlyExit ->
-    case earlyExit of
-        (ReturnValue value) -> return $ value
-        _ -> noneState
+raise :: String -> InterpreterStateM a
+raise = throwError
     
 
-write :: [Char] -> InterpreterState ()
+write :: [Char] -> InterpreterStateM ()
 write value = modify $ \state ->
-    state {stdout = (stdout state) ++ value}
+    state {interpreterStateStdout = (interpreterStateStdout state) ++ value}
 
-evalAll :: [Nodes.Expression] -> InterpreterState [Values.Value]
+evalAll :: [Nodes.Expression] -> InterpreterStateM [Values.Value]
 evalAll = mapM eval
 
 describeExpressionType :: Nodes.Expression -> String

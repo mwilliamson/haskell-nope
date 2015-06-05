@@ -23,6 +23,11 @@ boolTestCase name expression expectedBoolValue =
 
 interpreterTestSuite :: TestTree
 interpreterTestSuite = testGroup "InterpreterTests" [
+
+    programTestCase "Empty program does nothing" 
+        []
+        "",
+        
     programTestCase "Printing integer prints that integer to stdout" 
         [Nodes.ExpressionStatement (Nodes.Call (Nodes.builtin "print") [Nodes.IntegerLiteral (42 :: Integer)])]
         "42\n",
@@ -136,7 +141,7 @@ interpreterTestSuite = testGroup "InterpreterTests" [
 programTestCase :: [Char] -> [Nodes.Statement] -> String -> TestTree
 programTestCase testName ast expectedStdout =
     let state = (Interpreter.run (Nodes.Module ast))
-    in testCase testName $ expectedStdout @=? (Interpreter.stdout state)
+    in testCase testName $ expectedStdout @=? (Interpreter.interpreterStateStdout state)
 
 
 printStatement expression =
