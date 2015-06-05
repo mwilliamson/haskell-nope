@@ -40,9 +40,12 @@ run moduleNode =
 
 
 execModule :: Nodes.Module -> InterpreterStateM ()
-execModule moduleNode = do
+execModule moduleNode = (do
     pushStackFrameForModule moduleNode
-    execStack
+    -- TODO: handle invalid returns
+    _ <- execStackFrame
+    return ()
+    ) `catchError` \exception -> write ("Exception: " ++ exception)
 
 pushStackFrameForModule :: Nodes.Module -> InterpreterStateM ()
 pushStackFrameForModule (Nodes.Module statements) =
@@ -53,13 +56,6 @@ pushStackFrame statements = modify $ \state ->
     let stack = interpreterStateStack state
         frame = (head stack) { stackFrameStatements = statements }
     in state {interpreterStateStack = frame:stack }
-
-execStack :: InterpreterStateM ()
-execStack = (do
-    -- TODO: handle invalid returns
-    execStackFrame
-    return ()
-    ) `catchError` \error -> write ("Exception: " ++ error)
 
 execStackFrame :: InterpreterStateM (Maybe Values.Value)
 execStackFrame = (do
@@ -74,7 +70,7 @@ execStackFrame = (do
             case returnValue of
                 Nothing -> execStackFrame
                 Just _ -> do { popStackFrame; return returnValue }
-    ) `catchError` \error -> do { popStackFrame; throwError error }
+    ) `catchError` \exception -> do { popStackFrame; throwError exception }
 
 popStackFrame :: InterpreterStateM ()
 popStackFrame = modify $ \state ->
@@ -132,7 +128,7 @@ eval (Nodes.Call func args) = do
     call funcValue argValues
 eval (Nodes.VariableReference declaration) = do
     state <- get
-    let frame:frames = interpreterStateStack state
+    let frame = head (interpreterStateStack state)
     case Map.lookup declaration (stackFrameVariables frame) of
         (Just value) -> return $ value
         Nothing -> raise ("undefined variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
