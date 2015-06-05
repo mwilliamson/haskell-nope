@@ -42,8 +42,10 @@ run moduleNode =
 execModule :: Nodes.Module -> InterpreterStateM ()
 execModule moduleNode = (do
     pushStackFrameForModule moduleNode
-    -- TODO: handle invalid returns
-    _ <- execStackFrame
+    returnValue <- execStackFrame
+    case returnValue of
+        Just _ -> throwError "return outside of function"
+        Nothing -> return ()
     return ()
     ) `catchError` \exception -> write ("Exception: " ++ exception)
 

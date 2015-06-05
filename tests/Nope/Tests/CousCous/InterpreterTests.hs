@@ -117,6 +117,10 @@ interpreterTestSuite = testGroup "InterpreterTests" [
             printStatement (ref "x")
         ] "42\n"
     ],
+    
+    programTestCase "Module-level returns are illegal" [
+        Nodes.Return Nodes.NoneLiteral
+    ] "Exception: return outside of function",
         
     programTestCase "Attempting to access undefined variable raises error"
         [printStatement reference]
