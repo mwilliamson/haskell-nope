@@ -34,9 +34,11 @@ initialState =
             interpreterStateStack = [StackFrame [] Map.empty],
             interpreterStateHeap = Heap.empty
         }
-        state' = interpreterStateDeclare (Nodes.Builtin "print") (Just Values.Print) emptyState
-        state'' = interpreterStateDeclare (Nodes.Builtin "bool") (Just Values.Bool) state'
-    in state''
+        builtins = [
+            (Nodes.Builtin "print", Values.Print),
+            (Nodes.Builtin "bool", Values.Bool)
+            ]
+    in foldl (\state (declaration, value) -> interpreterStateDeclare declaration (Just value) state) emptyState builtins
 
 run :: Nodes.Module -> InterpreterState
 run moduleNode =
