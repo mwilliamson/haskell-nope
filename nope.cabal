@@ -18,7 +18,8 @@ library
         Nope.CousCous,
         Nope.CousCous.Nodes,
         Nope.CousCous.Values,
-        Nope.CousCous.Interpreter
+        Nope.CousCous.Interpreter,
+        Nope.CousCous.Interpreter.Heap
     ghc-options: -Wall -Werror
     build-depends:
         base,

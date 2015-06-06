@@ -1,16 +1,15 @@
 module Nope.CousCous.Interpreter (run, InterpreterState(interpreterStateStdout)) where
 
 import Data.List (intercalate)
-import Control.Monad (join)
 import Control.Monad.State (State, modify, get, put, execState)
 import Control.Monad.Except (ExceptT, throwError, catchError, runExceptT)
 import qualified Data.Map.Strict as Map
 
 import qualified Nope.CousCous.Nodes as Nodes
 import qualified Nope.CousCous.Values as Values
+import qualified Nope.CousCous.Interpreter.Heap as Heap
 
-type VariableIndex = Int
-type Variables = Map.Map Nodes.VariableDeclaration VariableIndex
+type Variables = Map.Map Nodes.VariableDeclaration Heap.Address
 data StackFrame = StackFrame {
     stackFrameStatements :: [Nodes.Statement],
     stackFrameVariables :: Variables
@@ -18,19 +17,13 @@ data StackFrame = StackFrame {
 data InterpreterState = InterpreterState {
     interpreterStateStdout :: String,
     interpreterStateStack :: [StackFrame],
-    interpreterStateHeap :: Map.Map VariableIndex (Maybe Values.Value),
-    interpreterStateHeapIndex :: Int
+    interpreterStateHeap :: Heap.Heap
 }
 type InterpreterStateM = ExceptT String (State InterpreterState)
 
 
-lookupVariable :: VariableIndex -> InterpreterState -> Maybe Values.Value
-lookupVariable variableIndex state =
-    -- TODO: missing keys in the map are actually an error in the interpreter, so should probably be handled separately
-    join $ Map.lookup variableIndex (interpreterStateHeap state)
-
-lookupVariableIndex :: Nodes.VariableDeclaration -> InterpreterState -> Maybe VariableIndex
-lookupVariableIndex declaration state =
+lookupHeapAddress :: Nodes.VariableDeclaration -> InterpreterState -> Maybe Heap.Address
+lookupHeapAddress declaration state =
     let frame = head (interpreterStateStack state)
     in Map.lookup declaration (stackFrameVariables frame)
 
@@ -39,8 +32,7 @@ initialState =
     let emptyState = InterpreterState {
             interpreterStateStdout = "",
             interpreterStateStack = [StackFrame [] Map.empty],
-            interpreterStateHeap = Map.empty,
-            interpreterStateHeapIndex = 0
+            interpreterStateHeap = Heap.empty
         }
         state' = interpreterStateDeclare (Nodes.Builtin "print") (Just Values.Print) emptyState
         state'' = interpreterStateDeclare (Nodes.Builtin "bool") (Just Values.Bool) state'
@@ -129,20 +121,18 @@ exec (Nodes.Return expression) = do
 assign :: Nodes.VariableDeclaration -> Values.Value -> InterpreterStateM ()
 assign declaration value = do
     state <- get
-    variableIndex <- lookupVariableIndexOrException declaration
-    let heap' = Map.insert variableIndex (Just value) (interpreterStateHeap state)
+    heapAddress <- lookupHeapAddressOrException declaration
+    let heap' = Heap.assign heapAddress value (interpreterStateHeap state)
     put $ state { interpreterStateHeap = heap' }
 
 interpreterStateDeclare :: Nodes.VariableDeclaration -> Maybe Values.Value -> InterpreterState -> InterpreterState
 interpreterStateDeclare declaration value state = 
     let frame:frames = interpreterStateStack state
-        variableIndex = interpreterStateHeapIndex state
-        variables' = Map.insert declaration variableIndex (stackFrameVariables frame)
-        heap' = Map.insert variableIndex value (interpreterStateHeap state)
+        (heapAddress, heap') = Heap.declare value (interpreterStateHeap state)
+        variables' = Map.insert declaration heapAddress (stackFrameVariables frame)
         frame' = frame { stackFrameVariables = variables' }
     in state {
         interpreterStateStack = frame':frames,
-        interpreterStateHeapIndex = variableIndex + 1,
         interpreterStateHeap = heap'
     }
 
@@ -158,15 +148,16 @@ eval (Nodes.Call func args) = do
     argValues <- evalAll args
     call funcValue argValues
 eval (Nodes.VariableReference declaration) = do
-    variableIndex <- lookupVariableIndexOrException declaration
+    heapAddress <- lookupHeapAddressOrException declaration
     state <- get
-    valueOrException (lookupVariable variableIndex state) ("unbound variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
+    let value = Heap.lookup heapAddress (interpreterStateHeap state)
+    valueOrException value ("unbound variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
 
 
-lookupVariableIndexOrException :: Nodes.VariableDeclaration -> InterpreterStateM VariableIndex
-lookupVariableIndexOrException declaration = do
+lookupHeapAddressOrException :: Nodes.VariableDeclaration -> InterpreterStateM Heap.Address
+lookupHeapAddressOrException declaration = do
     state <- get
-    valueOrException (lookupVariableIndex declaration state) ("undefined variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
+    valueOrException (lookupHeapAddress declaration state) ("undefined variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
 
 valueOrException :: Maybe a -> String -> InterpreterStateM a
 valueOrException (Just value) _ = return value
