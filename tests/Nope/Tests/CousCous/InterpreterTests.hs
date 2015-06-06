@@ -142,8 +142,14 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     ] "Exception: return outside of function",
         
     statementsTestCase "Attempting to access undefined variable raises error"
-        [printStatement reference]
+        [printStatement (ref "x")]
         "Exception: undefined variable: 'x'",
+        
+    moduleTestCase "Attempting to access defined but unbound variable raises error"
+        (Nodes.Module
+            [decl "x"]
+            [printStatement (ref "x")])
+        "Exception: unbound variable: 'x'",
         
     statementsTestCase "Previous writes to stdout are retained when error is raised"
         [

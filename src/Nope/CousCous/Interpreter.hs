@@ -160,8 +160,7 @@ eval (Nodes.Call func args) = do
 eval (Nodes.VariableReference declaration) = do
     variableIndex <- lookupVariableIndexOrException declaration
     state <- get
-    let Just v = lookupVariable variableIndex state
-    return v
+    valueOrException (lookupVariable variableIndex state) ("unbound variable: '" ++ (Nodes.variableDeclarationName declaration) ++ "'")
 
 
 lookupVariableIndexOrException :: Nodes.VariableDeclaration -> InterpreterStateM VariableIndex
