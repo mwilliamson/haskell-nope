@@ -13,6 +13,10 @@ data VariableDeclaration =
     Builtin String
     deriving (Show, Eq)
 
+declarationName :: VariableDeclaration -> String
+declarationName (Builtin name) = name
+declarationName (VariableDeclaration name _) = name
+
 type Environment = Map.Map String VariableDeclaration
 
 type ResolvedModule = Nodes.Module [VariableDeclaration] VariableDeclaration
@@ -27,7 +31,8 @@ resolveReferences moduleNode =
 
 resolveReferencesInModule :: ParsedModule -> Counter ResolvedModule
 resolveReferencesInModule moduleNode = do
-    environment <- generateDeclarations moduleNode
+    declarations <- generateDeclarations moduleNode
+    let environment = createEnvironment declarations
     statements <- mapM (resolveReferencesInStatement environment) (Nodes.statements moduleNode)
     return $ Nodes.Module (Map.elems environment) statements
 
@@ -46,11 +51,11 @@ resolveReferencesInStatement outerEnvironment (Nodes.FunctionStatement function)
     -- An absent name is a programming error: they should be added by name declaration
     let (Just declaration) = Map.lookup (Nodes.functionTarget function) outerEnvironment
     bodyDeclarations <- generateDeclarations function
-    let bodyEnvironment = Map.union bodyDeclarations outerEnvironment
+    let bodyEnvironment = extendEnvironment bodyDeclarations outerEnvironment
     body <- mapM (resolveReferencesInStatement bodyEnvironment) (Nodes.functionBody function)
     return $ Nodes.FunctionStatement $ Nodes.Function {
         Nodes.functionTarget = declaration,
-        Nodes.functionScope = Map.elems bodyDeclarations,
+        Nodes.functionScope = bodyDeclarations,
         Nodes.functionBody = body
     }
 
@@ -69,16 +74,25 @@ resolveReferencesInExpression scope (Nodes.Call func args) =
     in Nodes.Call func' args'
 resolveReferencesInExpression _ (Nodes.Literal literal) = Nodes.Literal literal
 
-generateDeclarations :: CreatesScope a => a -> Counter Environment
-generateDeclarations a = do
-    declarations <- namesToDeclarations (declaredNames a)
-    return (Map.fromList declarations)
+generateDeclarations :: CreatesScope a => a -> Counter [VariableDeclaration]
+generateDeclarations = namesToDeclarations . declaredNames
 
-namesToDeclarations :: [String] -> Counter [(String, VariableDeclaration)]
+namesToDeclarations :: [String] -> Counter [VariableDeclaration]
 namesToDeclarations names = mapM nameToDeclaration names
 
-nameToDeclaration :: String -> Counter (String, VariableDeclaration)
+nameToDeclaration :: String -> Counter VariableDeclaration
 nameToDeclaration name = do
     count <- get
     put (count + 1)
-    return $ (name, VariableDeclaration name count)
+    return $ VariableDeclaration name count
+
+extendEnvironment :: [VariableDeclaration] -> Environment -> Environment
+extendEnvironment declarations environment = 
+    Map.union (createEnvironment declarations) environment
+
+createEnvironment :: [VariableDeclaration] -> Environment
+createEnvironment = mapKeyedBy declarationName
+
+mapKeyedBy :: Ord k => (v -> k) -> [v] -> Map.Map k v
+mapKeyedBy key values =
+    Map.fromList $ map (\value -> (key value, value)) values
