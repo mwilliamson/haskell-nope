@@ -15,6 +15,7 @@ import qualified Nope.Nodes as Nodes
 type ParsedModule = Nodes.Module () String
 type ParsedStatement = Nodes.Statement () String
 type ParsedExpression = Nodes.Expression String
+type ParsedFunction = Nodes.Function () String
 
 
 parsedModule :: [ParsedStatement] -> ParsedModule

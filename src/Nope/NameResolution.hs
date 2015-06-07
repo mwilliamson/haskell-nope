@@ -27,9 +27,9 @@ resolveReferences moduleNode =
 
 resolveReferencesInModule :: ParsedModule -> Counter ResolvedModule
 resolveReferencesInModule moduleNode = do
-    scope <- scopeForModule moduleNode
-    statements <- mapM (resolveReferencesInStatement scope) (Nodes.statements moduleNode)
-    return $ Nodes.Module (Map.elems scope) statements
+    environment <- generateDeclarations moduleNode
+    statements <- mapM (resolveReferencesInStatement environment) (Nodes.statements moduleNode)
+    return $ Nodes.Module (Map.elems environment) statements
 
 
 resolveReferencesInStatement :: Environment -> ParsedStatement -> Counter ResolvedStatement
@@ -45,7 +45,7 @@ resolveReferencesInStatement environment (Nodes.Assign targets value) = do
 resolveReferencesInStatement outerEnvironment (Nodes.FunctionStatement function) = do
     -- An absent name is a programming error: they should be added by name declaration
     let (Just declaration) = Map.lookup (Nodes.functionTarget function) outerEnvironment
-    bodyDeclarations <- scopeForFunction (Nodes.functionBody function)
+    bodyDeclarations <- generateDeclarations function
     let bodyEnvironment = Map.union bodyDeclarations outerEnvironment
     body <- mapM (resolveReferencesInStatement bodyEnvironment) (Nodes.functionBody function)
     return $ Nodes.FunctionStatement $ Nodes.Function {
@@ -69,20 +69,10 @@ resolveReferencesInExpression scope (Nodes.Call func args) =
     in Nodes.Call func' args'
 resolveReferencesInExpression _ (Nodes.Literal literal) = Nodes.Literal literal
 
-
-scopeForModule :: ParsedModule -> Counter Environment
-scopeForModule moduleNode = do
-    let names = namesDeclaredInModule moduleNode
-    declarations <- namesToDeclarations names
-    return $ Map.fromList declarations
-
--- TODO: fix up the types
-scopeForFunction :: [ParsedStatement] -> Counter Environment
-scopeForFunction statements = do
-    let names = concat $ map namesDeclaredInStatement statements
-    declarations <- namesToDeclarations names
-    return $ Map.fromList declarations
-
+generateDeclarations :: CreatesScope a => a -> Counter Environment
+generateDeclarations a = do
+    declarations <- namesToDeclarations (declaredNames a)
+    return (Map.fromList declarations)
 
 namesToDeclarations :: [String] -> Counter [(String, VariableDeclaration)]
 namesToDeclarations names = mapM nameToDeclaration names
