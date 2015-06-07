@@ -68,7 +68,15 @@ parseModule (Source sourceDescription input) = do
             nopeTargets <- mapM transformExpression targets
             nopeValue <- transformExpression value
             return $ Nodes.Assign nopeTargets nopeValue
-
+        
+        transformStatement function@Python.Fun{} = do
+            let name = Python.ident_string (Python.fun_name function)
+            body <- mapM transformStatement (Python.fun_body function)
+            return $ Nodes.Function {
+                Nodes.functionTarget = name,
+                Nodes.functionBody = body
+            }
+        
         transformStatement statement =
             unsupportedNode (Python.stmt_annot statement) (describeStatement statement)
 

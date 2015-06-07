@@ -110,7 +110,7 @@ exec (Nodes.If conditionExpression trueBranch falseBranch) = do
         _ -> raise "condition must be bool"
     return Nothing
 
-exec definition@Nodes.FunctionDefinition{} = do
+exec definition@Nodes.Function{} = do
     let declaration = Nodes.functionDeclaration definition
     let name = Nodes.variableDeclarationName declaration
     let body = Nodes.functionBody definition

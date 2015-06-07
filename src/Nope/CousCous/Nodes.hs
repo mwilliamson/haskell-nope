@@ -16,7 +16,7 @@ data Statement =
     ExpressionStatement Expression |
     Assign Expression Expression |
     If Expression [Statement] [Statement] |
-    FunctionDefinition {
+    Function {
         functionDeclaration :: VariableDeclaration,
         functionArguments :: [VariableDeclaration],
         functionLocalDeclarations :: [VariableDeclaration],

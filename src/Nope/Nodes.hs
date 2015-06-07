@@ -7,7 +7,11 @@ data Module scope ref  = Module {
 
 data Statement ref =
     ExpressionStatement (Expression ref) |
-    Assign [Expression ref] (Expression ref)
+    Assign [Expression ref] (Expression ref) |
+    Function {
+        functionTarget :: ref,
+        functionBody :: [Statement ref]
+    }
     deriving (Eq, Show)
 
 data Expression ref =

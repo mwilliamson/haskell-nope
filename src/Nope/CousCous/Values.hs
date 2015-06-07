@@ -1,13 +1,13 @@
 module Nope.CousCous.Values where
 
-import Nope.CousCous.Nodes
+import qualified Nope.CousCous.Nodes as Nodes
 
 
 data Value =
     None |
     BooleanValue Bool |
     IntegerValue Integer |
-    Function String [VariableDeclaration] [VariableDeclaration] [Statement] |
+    Function String [Nodes.VariableDeclaration] [Nodes.VariableDeclaration] [Nodes.Statement] |
     Print |
     Bool
 

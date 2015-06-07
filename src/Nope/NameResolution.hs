@@ -31,11 +31,22 @@ resolveReferencesInModule moduleNode = do
     let statements = map (resolveReferencesInStatement scope) (Nodes.statements moduleNode)
     return $ Nodes.Module (Map.elems scope) statements
 
+
 resolveReferencesInStatement :: Environment -> ParsedStatement -> ResolvedStatement
+
 resolveReferencesInStatement environment (Nodes.ExpressionStatement value) =
     Nodes.ExpressionStatement (resolveReferencesInExpression environment value)
+
 resolveReferencesInStatement environment (Nodes.Assign targets value) =
     Nodes.Assign (map (resolveReferencesInExpression environment) targets) (resolveReferencesInExpression environment value)
+
+resolveReferencesInStatement environment function@Nodes.Function{} =
+    -- An absent name is a programming error: they should be added by name declaration
+    let (Just declaration) = Map.lookup (Nodes.functionTarget function) environment
+    in Nodes.Function {
+        Nodes.functionTarget = declaration,
+        Nodes.functionBody = map (resolveReferencesInStatement environment) (Nodes.functionBody function)
+    }
 
 resolveReferencesInExpression :: Environment -> ParsedExpression -> ResolvedExpression
 resolveReferencesInExpression env (Nodes.VariableReference name) =

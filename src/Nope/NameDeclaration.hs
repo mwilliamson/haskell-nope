@@ -11,6 +11,7 @@ namesDeclaredInModule moduleNode =
 
 namesDeclaredInStatement :: ParsedStatement -> [String]
 namesDeclaredInStatement (Nodes.Assign targets _) = concat (map namesDeclaredInTarget targets)
+namesDeclaredInStatement function@Nodes.Function{} = [Nodes.functionTarget function]
 namesDeclaredInStatement _ = []
 
 namesDeclaredInTarget :: ParsedExpression -> [String]

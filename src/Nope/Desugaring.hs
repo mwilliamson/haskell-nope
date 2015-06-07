@@ -19,10 +19,10 @@ desugar nopeModule =
 desugarModule :: ResolvedModule -> DesugarStateM CousCous.Module
 desugarModule nopeModule = do
     pushStackFrame []
-    statements <- mapM desugarStatement (Nope.statements nopeModule)
+    statements <- desugarStatements (Nope.statements nopeModule)
     temporaryDeclarations <- popStackFrame
     let declarations = (declarationsInModule nopeModule) ++ temporaryDeclarations
-    return $ CousCous.Module declarations (concat statements)
+    return $ CousCous.Module declarations statements
 
 
 pushStackFrame :: [CousCous.VariableDeclaration] -> DesugarStateM ()
@@ -44,11 +44,20 @@ declareVariable declaration = do
 
 declarationsInModule :: ResolvedModule -> [CousCous.VariableDeclaration]
 declarationsInModule Nope.Module { Nope.moduleScope = moduleScope } =
-    map desugarVariableDeclaration moduleScope
+    map desugarDeclaration moduleScope
+
+
+desugarStatements :: [ResolvedStatement] -> DesugarStateM [CousCous.Statement]
+desugarStatements statements = do
+    desugarredStatements <- mapM desugarStatement statements
+    return $ concat desugarredStatements
+
 
 desugarStatement :: ResolvedStatement -> DesugarStateM [CousCous.Statement]
+
 desugarStatement (Nope.ExpressionStatement expression) =
     return $ [CousCous.ExpressionStatement $ desugarExpression expression]
+
 desugarStatement (Nope.Assign targets value) = do
     let cousCousValue = desugarExpression value
     let cousCousTargets = map desugarExpression targets
@@ -59,6 +68,15 @@ desugarStatement (Nope.Assign targets value) = do
             let tmpAssignment = CousCous.Assign tmpReference cousCousValue
                 targetAssignments = map (\cousCousTarget -> CousCous.Assign cousCousTarget tmpReference) cousCousTargets
             in tmpAssignment : targetAssignments
+
+desugarStatement function@Nope.Function{} = do
+    body <- desugarStatements (Nope.functionBody function)
+    return [CousCous.Function {
+        CousCous.functionDeclaration = desugarDeclaration (Nope.functionTarget function),
+        CousCous.functionArguments = [],
+        CousCous.functionLocalDeclarations = [],
+        CousCous.functionBody = body
+    }]
 
 
 createTemporary :: DesugarStateM CousCous.Expression
@@ -79,7 +97,7 @@ desugarExpression :: ResolvedExpression -> CousCous.Expression
 desugarExpression (Nope.Call func args) =
     CousCous.Call (desugarExpression func) (map desugarExpression args)
 desugarExpression (Nope.VariableReference declaration) =
-    CousCous.VariableReference (desugarVariableDeclaration declaration)
+    CousCous.VariableReference (desugarDeclaration declaration)
 desugarExpression (Nope.Literal literal) = desugarLiteral literal
 
 
@@ -87,8 +105,8 @@ desugarLiteral :: Nope.Literal -> CousCous.Expression
 desugarLiteral Nope.NoneLiteral = CousCous.NoneLiteral
 desugarLiteral (Nope.IntegerLiteral value) = CousCous.IntegerLiteral value
 
-desugarVariableDeclaration :: VariableDeclaration -> CousCous.VariableDeclaration
-desugarVariableDeclaration (VariableDeclaration name declarationId) =
+desugarDeclaration :: VariableDeclaration -> CousCous.VariableDeclaration
+desugarDeclaration (VariableDeclaration name declarationId) =
     CousCous.VariableDeclaration name declarationId
-desugarVariableDeclaration (Builtin name) =
+desugarDeclaration (Builtin name) =
     CousCous.Builtin name

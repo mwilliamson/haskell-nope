@@ -21,7 +21,7 @@ boolTestCase name expression expectedBoolValue =
     in statementsTestCase name [Nodes.ExpressionStatement printExpression] (expectedBoolValue ++ "\n")
 
 
-func name = Nodes.FunctionDefinition {
+func name = Nodes.Function {
     Nodes.functionDeclaration = decl name,
     Nodes.functionArguments = [],
     Nodes.functionLocalDeclarations = [],
@@ -97,19 +97,19 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     
     testGroup "function definition" [
         statementsTestCase "Function returns None by default" [
-            (Nodes.FunctionDefinition (decl "f") [] [] []),
+            (Nodes.Function (decl "f") [] [] []),
             printStatement (Nodes.Call (ref "f") [])
         ] "None\n",
         
         statementsTestCase "Function returns value in return statement" [
-            (Nodes.FunctionDefinition (decl "f") [] [] [
+            (Nodes.Function (decl "f") [] [] [
                 Nodes.Return (Nodes.IntegerLiteral 42)
             ]),
             printStatement (Nodes.Call (ref "f") [])
         ] "42\n",
         
         statementsTestCase "Statements before return are executed" [
-            (Nodes.FunctionDefinition (decl "f") [] [] [
+            (Nodes.Function (decl "f") [] [] [
                 printStatement (Nodes.IntegerLiteral 42),
                 Nodes.Return Nodes.NoneLiteral
             ]),
