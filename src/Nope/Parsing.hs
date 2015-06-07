@@ -5,6 +5,7 @@ import qualified Language.Python.Version3.Parser as PythonParser
 import Language.Python.Common.ParseError (ParseError(UnexpectedToken, UnexpectedChar, StrError))
 import Language.Python.Common.Token (Token, token_span, tokenString)
 import Language.Python.Common.SrcLocation (SrcSpan, startRow, startCol, getSpan)
+import Data.Maybe (fromMaybe)
 
 import Nope.Results
 import Nope.Sources
@@ -76,6 +77,10 @@ parseModule (Source sourceDescription input) = do
                 Nodes.functionTarget = name,
                 Nodes.functionBody = body
             }
+        
+        transformStatement (Python.Return value _) = do
+            value' <- mapM transformExpression value
+            return $ Nodes.Return (fromMaybe Nodes.none value')
         
         transformStatement statement =
             unsupportedNode (Python.stmt_annot statement) (describeStatement statement)

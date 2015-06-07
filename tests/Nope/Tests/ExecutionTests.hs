@@ -33,8 +33,12 @@ executionTestSuite = testGroup "ExecutionTests" [
         "print(x)"
         (Right (Stdout "Exception: undefined variable: 'x'")),
         
-    programTestCase "Can call user-defined-function"
+    programTestCase "Can call user-defined function"
         "def f():\n  print(42)\nf()"
+        (Right (Stdout "42\n")),
+        
+    programTestCase "User-defined functions can return values"
+        "def f():\n  return 42\nprint(f())"
         (Right (Stdout "42\n"))
     ]
 

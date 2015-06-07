@@ -78,6 +78,10 @@ desugarStatement function@Nope.Function{} = do
         CousCous.functionBody = body
     }]
 
+desugarStatement (Nope.Return value) = do
+    let value' = desugarExpression value
+    return [(CousCous.Return value')]
+
 
 createTemporary :: DesugarStateM CousCous.Expression
 createTemporary = do

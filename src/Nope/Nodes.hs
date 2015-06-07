@@ -11,7 +11,8 @@ data Statement ref =
     Function {
         functionTarget :: ref,
         functionBody :: [Statement ref]
-    }
+    } |
+    Return (Expression ref)
     deriving (Eq, Show)
 
 data Expression ref =

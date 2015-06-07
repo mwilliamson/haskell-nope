@@ -48,6 +48,10 @@ resolveReferencesInStatement environment function@Nodes.Function{} =
         Nodes.functionBody = map (resolveReferencesInStatement environment) (Nodes.functionBody function)
     }
 
+resolveReferencesInStatement environment (Nodes.Return value) =
+    Nodes.Return (resolveReferencesInExpression environment value)
+
+
 resolveReferencesInExpression :: Environment -> ParsedExpression -> ResolvedExpression
 resolveReferencesInExpression env (Nodes.VariableReference name) =
     case Map.lookup name env of
