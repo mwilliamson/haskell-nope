@@ -50,11 +50,16 @@ resolveReferencesInStatement environment (Nodes.Assign targets value) = do
 resolveReferencesInStatement outerEnvironment (Nodes.FunctionStatement function) = do
     -- An absent name is a programming error: they should be added by name declaration
     let (Just declaration) = Map.lookup (Nodes.functionTarget function) outerEnvironment
+    
+    -- TODO: arguments should probably be handled in NameDeclaration
+    -- TODO: entries in arguments should not also appear in bodyDeclarations
+    arguments <- namesToDeclarations (Nodes.functionArguments function)
     bodyDeclarations <- generateDeclarations function
-    let bodyEnvironment = extendEnvironment bodyDeclarations outerEnvironment
+    let bodyEnvironment = extendEnvironment arguments (extendEnvironment bodyDeclarations outerEnvironment)
     body <- mapM (resolveReferencesInStatement bodyEnvironment) (Nodes.functionBody function)
     return $ Nodes.FunctionStatement $ Nodes.Function {
         Nodes.functionTarget = declaration,
+        Nodes.functionArguments = arguments,
         Nodes.functionScope = bodyDeclarations,
         Nodes.functionBody = body
     }

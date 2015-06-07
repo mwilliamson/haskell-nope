@@ -14,6 +14,7 @@ data Statement scope ref =
 
 data Function scope ref = Function {
     functionTarget :: ref,
+    functionArguments :: [ref],
     functionScope :: scope,
     functionBody :: [Statement scope ref]
 } deriving (Eq, Show)

@@ -73,9 +73,11 @@ parseModule (Source sourceDescription input) = do
         
         transformStatement function@Python.Fun{} = do
             let name = Python.ident_string (Python.fun_name function)
+                arguments = map (Python.ident_string . Python.param_name) (Python.fun_args function)
             body <- mapM transformStatement (Python.fun_body function)
             return $ Nodes.FunctionStatement $ Nodes.Function {
                 Nodes.functionTarget = name,
+                Nodes.functionArguments = arguments,
                 Nodes.functionScope = (),
                 Nodes.functionBody = body
             }

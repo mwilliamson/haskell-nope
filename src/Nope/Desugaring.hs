@@ -73,7 +73,7 @@ desugarStatement (Nope.FunctionStatement function) = do
     body <- desugarStatements (Nope.functionBody function)
     return [CousCous.Function {
         CousCous.functionDeclaration = desugarDeclaration (Nope.functionTarget function),
-        CousCous.functionArguments = [],
+        CousCous.functionArguments = map desugarDeclaration (Nope.functionArguments function),
         CousCous.functionLocalDeclarations = map desugarDeclaration (Nope.functionScope function),
         CousCous.functionBody = body
     }]

@@ -56,6 +56,13 @@ executionTestSuite = testGroup "ExecutionTests" [
             "def f():",
             "    return x",
             "print(f())"])
+        (Right (Stdout "42\n")),
+        
+    programTestCase "Functions can receive arguments"
+        (unlines [
+            "def f(x):",
+            "    return x",
+            "print(f(42))"])
         (Right (Stdout "42\n"))
     ]
 
