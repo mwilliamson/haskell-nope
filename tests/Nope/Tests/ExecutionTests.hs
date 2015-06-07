@@ -48,6 +48,14 @@ executionTestSuite = testGroup "ExecutionTests" [
             "    x = 11",
             "f()",
             "print(x)"])
+        (Right (Stdout "42\n")),
+        
+    programTestCase "User-defined functions can access variables from outer scope"
+        (unlines [
+            "x = 42",
+            "def f():",
+            "    return x",
+            "print(f())"])
         (Right (Stdout "42\n"))
     ]
 

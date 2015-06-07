@@ -24,6 +24,7 @@ nameResolutionTestSuite = testGroup "NameResolutionTests"
     , testCase "assigned names in functions are scoped to that function" $
         let moduleNode = parsedModule [Nope.Function {
             Nope.functionTarget = "f",
+            Nope.functionScope = (),
             Nope.functionBody = [Nope.Assign [Nope.VariableReference "x"] Nope.none]
         }]
             scopedNodes = resolveReferences moduleNode
@@ -32,5 +33,25 @@ nameResolutionTestSuite = testGroup "NameResolutionTests"
                 Nope.functionScope = [VariableDeclaration "x" 2],
                 Nope.functionBody = [Nope.Assign [Nope.VariableReference (VariableDeclaration "x" 2)] Nope.none]    
             }]
+        in expectedResult @=? Nope.statements (resolveReferences moduleNode)
+    
+    , testCase "functions can access variables from outer scope" $
+        let moduleNode = parsedModule [
+                Nope.Assign [Nope.VariableReference "x"] Nope.none,
+                Nope.Function {
+                    Nope.functionTarget = "f",
+                    Nope.functionScope = (),
+                    Nope.functionBody = [Nope.ExpressionStatement (Nope.VariableReference "x")]
+                }
+                ]
+            scopedNodes = resolveReferences moduleNode
+            expectedResult = [
+                Nope.Assign [Nope.VariableReference (VariableDeclaration "x" 1)] Nope.none,
+                Nope.Function {
+                    Nope.functionTarget = VariableDeclaration "f" 2,
+                    Nope.functionScope = [],
+                    Nope.functionBody = [Nope.ExpressionStatement (Nope.VariableReference (VariableDeclaration "x" 1))]
+                }
+                ]
         in expectedResult @=? Nope.statements (resolveReferences moduleNode)
     ]

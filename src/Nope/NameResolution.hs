@@ -45,11 +45,12 @@ resolveReferencesInStatement environment (Nodes.Assign targets value) = do
 resolveReferencesInStatement outerEnvironment function@Nodes.Function{} = do
     -- An absent name is a programming error: they should be added by name declaration
     let (Just declaration) = Map.lookup (Nodes.functionTarget function) outerEnvironment
-    bodyEnvironment <- scopeForFunction (Nodes.functionBody function)
+    bodyDeclarations <- scopeForFunction (Nodes.functionBody function)
+    let bodyEnvironment = Map.union bodyDeclarations outerEnvironment
     body <- mapM (resolveReferencesInStatement bodyEnvironment) (Nodes.functionBody function)
     return Nodes.Function {
         Nodes.functionTarget = declaration,
-        Nodes.functionScope = Map.elems bodyEnvironment,
+        Nodes.functionScope = Map.elems bodyDeclarations,
         Nodes.functionBody = body
     }
 
