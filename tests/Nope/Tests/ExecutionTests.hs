@@ -39,6 +39,15 @@ executionTestSuite = testGroup "ExecutionTests" [
         
     programTestCase "User-defined functions can return values"
         "def f():\n  return 42\nprint(f())"
+        (Right (Stdout "42\n")),
+        
+    programTestCase "User-defined functions store locals in their own scope"
+        (unlines [
+            "x = 42",
+            "def f():",
+            "    x = 11",
+            "f()",
+            "print(x)"])
         (Right (Stdout "42\n"))
     ]
 

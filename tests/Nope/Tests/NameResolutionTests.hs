@@ -14,9 +14,23 @@ nameResolutionTestSuite = testGroup "NameResolutionTests"
             scopedNodes = resolveReferences moduleNode
             expectedResult = [Nope.Assign [Nope.VariableReference (VariableDeclaration "x" 1)] Nope.none]
         in expectedResult @=? Nope.statements (resolveReferences moduleNode)
+        
     , testCase "names are assumed to be builtins if not defined" $
         let moduleNode = parsedModule [Nope.ExpressionStatement (Nope.VariableReference "x")]
             scopedNodes = resolveReferences moduleNode
             expectedResult = [Nope.ExpressionStatement (Nope.VariableReference (Builtin "x"))]
+        in expectedResult @=? Nope.statements (resolveReferences moduleNode)
+    
+    , testCase "assigned names in functions are scoped to that function" $
+        let moduleNode = parsedModule [Nope.Function {
+            Nope.functionTarget = "f",
+            Nope.functionBody = [Nope.Assign [Nope.VariableReference "x"] Nope.none]
+        }]
+            scopedNodes = resolveReferences moduleNode
+            expectedResult = [Nope.Function {
+                Nope.functionTarget = VariableDeclaration "f" 1,
+                Nope.functionScope = [VariableDeclaration "x" 2],
+                Nope.functionBody = [Nope.Assign [Nope.VariableReference (VariableDeclaration "x" 2)] Nope.none]    
+            }]
         in expectedResult @=? Nope.statements (resolveReferences moduleNode)
     ]

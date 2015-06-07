@@ -74,7 +74,7 @@ desugarStatement function@Nope.Function{} = do
     return [CousCous.Function {
         CousCous.functionDeclaration = desugarDeclaration (Nope.functionTarget function),
         CousCous.functionArguments = [],
-        CousCous.functionLocalDeclarations = [],
+        CousCous.functionLocalDeclarations = map desugarDeclaration (Nope.functionScope function),
         CousCous.functionBody = body
     }]
 

@@ -16,7 +16,7 @@ data VariableDeclaration =
 type Environment = Map.Map String VariableDeclaration
 
 type ResolvedModule = Nodes.Module [VariableDeclaration] VariableDeclaration
-type ResolvedStatement = Nodes.Statement VariableDeclaration
+type ResolvedStatement = Nodes.Statement [VariableDeclaration] VariableDeclaration
 type ResolvedExpression = Nodes.Expression VariableDeclaration
 
 type Counter = State Int
@@ -28,28 +28,33 @@ resolveReferences moduleNode =
 resolveReferencesInModule :: ParsedModule -> Counter ResolvedModule
 resolveReferencesInModule moduleNode = do
     scope <- scopeForModule moduleNode
-    let statements = map (resolveReferencesInStatement scope) (Nodes.statements moduleNode)
+    statements <- mapM (resolveReferencesInStatement scope) (Nodes.statements moduleNode)
     return $ Nodes.Module (Map.elems scope) statements
 
 
-resolveReferencesInStatement :: Environment -> ParsedStatement -> ResolvedStatement
+resolveReferencesInStatement :: Environment -> ParsedStatement -> Counter ResolvedStatement
 
 resolveReferencesInStatement environment (Nodes.ExpressionStatement value) =
-    Nodes.ExpressionStatement (resolveReferencesInExpression environment value)
+    return $ Nodes.ExpressionStatement (resolveReferencesInExpression environment value)
 
-resolveReferencesInStatement environment (Nodes.Assign targets value) =
-    Nodes.Assign (map (resolveReferencesInExpression environment) targets) (resolveReferencesInExpression environment value)
+resolveReferencesInStatement environment (Nodes.Assign targets value) = do
+    let targets' = map (resolveReferencesInExpression environment) targets
+        value' = resolveReferencesInExpression environment value
+    return $ Nodes.Assign targets' value'
 
-resolveReferencesInStatement environment function@Nodes.Function{} =
+resolveReferencesInStatement outerEnvironment function@Nodes.Function{} = do
     -- An absent name is a programming error: they should be added by name declaration
-    let (Just declaration) = Map.lookup (Nodes.functionTarget function) environment
-    in Nodes.Function {
+    let (Just declaration) = Map.lookup (Nodes.functionTarget function) outerEnvironment
+    bodyEnvironment <- scopeForFunction (Nodes.functionBody function)
+    body <- mapM (resolveReferencesInStatement bodyEnvironment) (Nodes.functionBody function)
+    return Nodes.Function {
         Nodes.functionTarget = declaration,
-        Nodes.functionBody = map (resolveReferencesInStatement environment) (Nodes.functionBody function)
+        Nodes.functionScope = Map.elems bodyEnvironment,
+        Nodes.functionBody = body
     }
 
 resolveReferencesInStatement environment (Nodes.Return value) =
-    Nodes.Return (resolveReferencesInExpression environment value)
+    return $ Nodes.Return (resolveReferencesInExpression environment value)
 
 
 resolveReferencesInExpression :: Environment -> ParsedExpression -> ResolvedExpression
@@ -69,6 +74,14 @@ scopeForModule moduleNode = do
     let names = namesDeclaredInModule moduleNode
     declarations <- namesToDeclarations names
     return $ Map.fromList declarations
+
+-- TODO: fix up the types
+scopeForFunction :: [ParsedStatement] -> Counter Environment
+scopeForFunction statements = do
+    let names = concat $ map namesDeclaredInStatement statements
+    declarations <- namesToDeclarations names
+    return $ Map.fromList declarations
+
 
 namesToDeclarations :: [String] -> Counter [(String, VariableDeclaration)]
 namesToDeclarations names = mapM nameToDeclaration names

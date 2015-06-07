@@ -13,7 +13,7 @@ import qualified Nope.Nodes as Nodes
 
 
 type ParsedModule = Nodes.Module () String
-type ParsedStatement = Nodes.Statement String
+type ParsedStatement = Nodes.Statement () String
 type ParsedExpression = Nodes.Expression String
 
 
@@ -75,6 +75,7 @@ parseModule (Source sourceDescription input) = do
             body <- mapM transformStatement (Python.fun_body function)
             return $ Nodes.Function {
                 Nodes.functionTarget = name,
+                Nodes.functionScope = (),
                 Nodes.functionBody = body
             }
         

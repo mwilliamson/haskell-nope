@@ -2,15 +2,16 @@ module Nope.Nodes where
 
 data Module scope ref  = Module {
     moduleScope :: scope,
-    statements :: [Statement ref]
+    statements :: [Statement scope ref]
 } deriving (Eq, Show)
 
-data Statement ref =
+data Statement scope ref =
     ExpressionStatement (Expression ref) |
     Assign [Expression ref] (Expression ref) |
     Function {
         functionTarget :: ref,
-        functionBody :: [Statement ref]
+        functionScope :: scope,
+        functionBody :: [Statement scope ref]
     } |
     Return (Expression ref)
     deriving (Eq, Show)
