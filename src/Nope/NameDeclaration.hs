@@ -2,6 +2,8 @@
 
 module Nope.NameDeclaration where
 
+import Data.List (nub)
+
 import qualified Nope.Nodes as Nodes
 import Nope.Parsing (ParsedModule, ParsedStatement, ParsedFunction, ParsedExpression)
 
@@ -19,7 +21,7 @@ instance CreatesScope ParsedFunction where
 
 namesDeclaredInStatements :: [ParsedStatement] -> [String]
 namesDeclaredInStatements statements =
-    concat (map namesDeclaredInStatement statements)
+    nub (concat (map namesDeclaredInStatement statements))
 
 namesDeclaredInStatement :: ParsedStatement -> [String]
 namesDeclaredInStatement (Nodes.Assign targets _) = concat (map namesDeclaredInTarget targets)

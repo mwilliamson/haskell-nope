@@ -13,4 +13,8 @@ nameDeclarationTestSuite = testGroup "NameDeclarationTests"
         let moduleNode = parsedModule [Nope.Assign [Nope.VariableReference "x"] Nope.none,
                                        Nope.Assign [Nope.VariableReference "y"] Nope.none]
         in ["x", "y"] @=? (declaredNames moduleNode)
+    , testCase "multiple assignments to the same variable only generate one declaration" $
+        let moduleNode = parsedModule [Nope.Assign [Nope.VariableReference "x"] Nope.none,
+                                       Nope.Assign [Nope.VariableReference "x"] Nope.none]
+        in ["x"] @=? (declaredNames moduleNode)
     ]
