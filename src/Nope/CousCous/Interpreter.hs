@@ -110,9 +110,13 @@ exec (Nodes.If conditionExpression trueBranch falseBranch) = do
         _ -> raise "condition must be bool"
     return Nothing
 
-exec (Nodes.FunctionDefinition declaration scope statements) = do
-    let (Nodes.VariableDeclaration name _) = declaration
-    assign declaration (Values.Function name scope statements)
+exec definition@Nodes.FunctionDefinition{} = do
+    let declaration = Nodes.functionDeclaration definition
+    let name = Nodes.variableDeclarationName declaration
+    let body = Nodes.functionBody definition
+    let args = Nodes.functionArguments definition
+    let locals = Nodes.functionLocalDeclarations definition
+    assign declaration (Values.Function name args locals body)
     return Nothing
 
 exec (Nodes.Return expression) = do
@@ -167,8 +171,12 @@ valueOrException Nothing exception = raise exception
 
 call :: Values.Value -> [Values.Value] -> InterpreterStateM Values.Value
 
-call (Values.Function _ declarations statements) [] = do
-    pushStackFrame declarations statements
+call (Values.Function _ formalArguments declarations statements) actualArguments = do
+    pushStackFrame (formalArguments ++ declarations) statements
+    
+    -- TODO: handle mismatch in length
+    _ <- sequence $ zipWith assign formalArguments actualArguments
+    
     returnValue <- execStackFrame
     case returnValue of
         Nothing -> return Values.None

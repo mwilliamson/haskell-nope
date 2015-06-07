@@ -16,7 +16,12 @@ data Statement =
     ExpressionStatement Expression |
     Assign Expression Expression |
     If Expression [Statement] [Statement] |
-    FunctionDefinition VariableDeclaration [VariableDeclaration] [Statement] |
+    FunctionDefinition {
+        functionDeclaration :: VariableDeclaration,
+        functionArguments :: [VariableDeclaration],
+        functionLocalDeclarations :: [VariableDeclaration],
+        functionBody :: [Statement]
+    } |
     Return Expression
     deriving (Show, Eq)
 

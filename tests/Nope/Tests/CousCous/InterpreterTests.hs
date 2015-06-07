@@ -21,6 +21,14 @@ boolTestCase name expression expectedBoolValue =
     in statementsTestCase name [Nodes.ExpressionStatement printExpression] (expectedBoolValue ++ "\n")
 
 
+func name = Nodes.FunctionDefinition {
+    Nodes.functionDeclaration = decl name,
+    Nodes.functionArguments = [],
+    Nodes.functionLocalDeclarations = [],
+    Nodes.functionBody = []
+}
+
+
 interpreterTestSuite :: TestTree
 interpreterTestSuite = testGroup "InterpreterTests" [
 
@@ -89,19 +97,19 @@ interpreterTestSuite = testGroup "InterpreterTests" [
     
     testGroup "function definition" [
         statementsTestCase "Function returns None by default" [
-            (Nodes.FunctionDefinition (decl "f") [] []),
+            (Nodes.FunctionDefinition (decl "f") [] [] []),
             printStatement (Nodes.Call (ref "f") [])
         ] "None\n",
         
         statementsTestCase "Function returns value in return statement" [
-            (Nodes.FunctionDefinition (decl "f") [] [
+            (Nodes.FunctionDefinition (decl "f") [] [] [
                 Nodes.Return (Nodes.IntegerLiteral 42)
             ]),
             printStatement (Nodes.Call (ref "f") [])
         ] "42\n",
         
         statementsTestCase "Statements before return are executed" [
-            (Nodes.FunctionDefinition (decl "f") [] [
+            (Nodes.FunctionDefinition (decl "f") [] [] [
                 printStatement (Nodes.IntegerLiteral 42),
                 Nodes.Return Nodes.NoneLiteral
             ]),
@@ -109,32 +117,49 @@ interpreterTestSuite = testGroup "InterpreterTests" [
         ] "42\n",
         
         statementsTestCase "Statements after return are not executed" [
-            (Nodes.FunctionDefinition (decl "f") [] [
-                Nodes.Return Nodes.NoneLiteral,
-                printStatement (Nodes.IntegerLiteral 42)
-            ]),
+            ((func "f") {
+                Nodes.functionBody = [
+                    Nodes.Return Nodes.NoneLiteral,
+                    printStatement (Nodes.IntegerLiteral 42)
+                ]
+            }),
             Nodes.ExpressionStatement (Nodes.Call (ref "f") [])
         ] "",
         
         moduleTestCase "Assignments in function don't affect outer scope if variable is scoped to function"
             (Nodes.Module [decl "x", decl "f"] [
                 Nodes.Assign (ref "x") (Nodes.IntegerLiteral 42),
-                (Nodes.FunctionDefinition (decl "f") [decl "x"] [
-                    Nodes.Assign (ref "x") (Nodes.IntegerLiteral 24)
-                ]),
-                Nodes.ExpressionStatement (Nodes.Call (ref "f") []),
+                ((func "f") {
+                    Nodes.functionLocalDeclarations = [decl "x"],
+                    Nodes.functionBody = [
+                        Nodes.Assign (ref "x") (Nodes.IntegerLiteral 24)
+                    ]
+                }),
                 printStatement (ref "x")
             ]) "42\n",
         
         moduleTestCase "Assignments in function affect outer scope if variable is not scoped to function"
             (Nodes.Module [decl "x", decl "f"] [
                 Nodes.Assign (ref "x") (Nodes.IntegerLiteral 42),
-                (Nodes.FunctionDefinition (decl "f") [] [
-                    Nodes.Assign (ref "x") (Nodes.IntegerLiteral 24)
-                ]),
+                ((func "f") {
+                    Nodes.functionBody = [
+                        Nodes.Assign (ref "x") (Nodes.IntegerLiteral 24)
+                    ]
+                }),
                 Nodes.ExpressionStatement (Nodes.Call (ref "f") []),
                 printStatement (ref "x")
-            ]) "24\n"
+            ]) "24\n",
+        
+        moduleTestCase "Functions can receive arguments"
+            (Nodes.Module [decl "f"] [
+                ((func "f") {
+                    Nodes.functionArguments = [decl "x"],
+                    Nodes.functionBody = [
+                        printStatement (ref "x")
+                    ]
+                }),
+                Nodes.ExpressionStatement (Nodes.Call (ref "f") [Nodes.IntegerLiteral 42])
+            ]) "42\n"
     ],
     
     statementsTestCase "Module-level returns are illegal" [
