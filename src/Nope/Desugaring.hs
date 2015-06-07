@@ -69,7 +69,7 @@ desugarStatement (Nope.Assign targets value) = do
                 targetAssignments = map (\cousCousTarget -> CousCous.Assign cousCousTarget tmpReference) cousCousTargets
             in tmpAssignment : targetAssignments
 
-desugarStatement function@Nope.Function{} = do
+desugarStatement (Nope.FunctionStatement function) = do
     body <- desugarStatements (Nope.functionBody function)
     return [CousCous.Function {
         CousCous.functionDeclaration = desugarDeclaration (Nope.functionTarget function),

@@ -22,13 +22,13 @@ nameResolutionTestSuite = testGroup "NameResolutionTests"
         in expectedResult @=? Nope.statements (resolveReferences moduleNode)
     
     , testCase "assigned names in functions are scoped to that function" $
-        let moduleNode = parsedModule [Nope.Function {
+        let moduleNode = parsedModule [Nope.FunctionStatement $ Nope.Function {
             Nope.functionTarget = "f",
             Nope.functionScope = (),
             Nope.functionBody = [Nope.Assign [Nope.VariableReference "x"] Nope.none]
         }]
             scopedNodes = resolveReferences moduleNode
-            expectedResult = [Nope.Function {
+            expectedResult = [Nope.FunctionStatement $ Nope.Function {
                 Nope.functionTarget = VariableDeclaration "f" 1,
                 Nope.functionScope = [VariableDeclaration "x" 2],
                 Nope.functionBody = [Nope.Assign [Nope.VariableReference (VariableDeclaration "x" 2)] Nope.none]    
@@ -38,7 +38,7 @@ nameResolutionTestSuite = testGroup "NameResolutionTests"
     , testCase "functions can access variables from outer scope" $
         let moduleNode = parsedModule [
                 Nope.Assign [Nope.VariableReference "x"] Nope.none,
-                Nope.Function {
+                Nope.FunctionStatement $ Nope.Function {
                     Nope.functionTarget = "f",
                     Nope.functionScope = (),
                     Nope.functionBody = [Nope.ExpressionStatement (Nope.VariableReference "x")]
@@ -47,7 +47,7 @@ nameResolutionTestSuite = testGroup "NameResolutionTests"
             scopedNodes = resolveReferences moduleNode
             expectedResult = [
                 Nope.Assign [Nope.VariableReference (VariableDeclaration "x" 1)] Nope.none,
-                Nope.Function {
+                Nope.FunctionStatement $ Nope.Function {
                     Nope.functionTarget = VariableDeclaration "f" 2,
                     Nope.functionScope = [],
                     Nope.functionBody = [Nope.ExpressionStatement (Nope.VariableReference (VariableDeclaration "x" 1))]

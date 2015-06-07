@@ -8,13 +8,15 @@ data Module scope ref  = Module {
 data Statement scope ref =
     ExpressionStatement (Expression ref) |
     Assign [Expression ref] (Expression ref) |
-    Function {
-        functionTarget :: ref,
-        functionScope :: scope,
-        functionBody :: [Statement scope ref]
-    } |
+    FunctionStatement (Function scope ref) |
     Return (Expression ref)
     deriving (Eq, Show)
+
+data Function scope ref = Function {
+    functionTarget :: ref,
+    functionScope :: scope,
+    functionBody :: [Statement scope ref]
+} deriving (Eq, Show)
 
 data Expression ref =
     Literal Literal |
