@@ -3,13 +3,13 @@ module Nope.CousCous.Nodes where
 data Expression =
     NoneLiteral |
     BooleanLiteral Bool |
-    VariableReference VariableDeclaration |
+    VariableReference Declaration |
     IntegerLiteral Integer |
     Call Expression [Expression]
     deriving (Show, Eq)
 
 
-data Module = Module [VariableDeclaration] [Statement]
+data Module = Module [Declaration] [Statement]
     deriving (Show, Eq)
 
 data Statement =
@@ -17,24 +17,24 @@ data Statement =
     Assign Expression Expression |
     If Expression [Statement] [Statement] |
     Function {
-        functionDeclaration :: VariableDeclaration,
-        functionArguments :: [VariableDeclaration],
-        functionLocalDeclarations :: [VariableDeclaration],
+        functionDeclaration :: Declaration,
+        functionArguments :: [Declaration],
+        functionLocalDeclarations :: [Declaration],
         functionBody :: [Statement]
     } |
     Return Expression
     deriving (Show, Eq)
 
-data VariableDeclaration =
+data Declaration =
     VariableDeclaration String Int |
     Builtin String |
     Temporary Int
     deriving (Show, Eq, Ord)
 
-variableDeclarationName :: VariableDeclaration -> String
-variableDeclarationName (Builtin name) = name
-variableDeclarationName (VariableDeclaration name _) = name
-variableDeclarationName (Temporary declarationId) = "(tmp" ++ (show declarationId) ++ ")"
+declarationName :: Declaration -> String
+declarationName (Builtin name) = name
+declarationName (VariableDeclaration name _) = name
+declarationName (Temporary declarationId) = "(tmp" ++ (show declarationId) ++ ")"
 
 builtin :: String -> Expression
 builtin name = VariableReference (Builtin name)

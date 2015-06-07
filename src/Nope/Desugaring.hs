@@ -8,7 +8,7 @@ import Nope.NameResolution
 
 data DesugarState = DesugarState {
     desugarStateTemporaryIndex :: Int,
-    desugarStateTemporaryStack:: [[CousCous.VariableDeclaration]]
+    desugarStateTemporaryStack:: [[CousCous.Declaration]]
 }
 type DesugarStateM = State DesugarState
 
@@ -25,24 +25,24 @@ desugarModule nopeModule = do
     return $ CousCous.Module declarations statements
 
 
-pushStackFrame :: [CousCous.VariableDeclaration] -> DesugarStateM ()
+pushStackFrame :: [CousCous.Declaration] -> DesugarStateM ()
 pushStackFrame frame = modify $ \state ->
     state { desugarStateTemporaryStack = frame:(desugarStateTemporaryStack state) }
 
-popStackFrame :: DesugarStateM [CousCous.VariableDeclaration]
+popStackFrame :: DesugarStateM [CousCous.Declaration]
 popStackFrame = do
     state <- get
     let stack = desugarStateTemporaryStack state
     put state { desugarStateTemporaryStack = tail stack }
     return $ head stack
 
-declareVariable :: CousCous.VariableDeclaration -> DesugarStateM ()
+declareVariable :: CousCous.Declaration -> DesugarStateM ()
 declareVariable declaration = do
     declarations <- popStackFrame
     pushStackFrame (declaration:declarations)
     
 
-declarationsInModule :: ResolvedModule -> [CousCous.VariableDeclaration]
+declarationsInModule :: ResolvedModule -> [CousCous.Declaration]
 declarationsInModule Nope.Module { Nope.moduleScope = moduleScope } =
     map desugarDeclaration moduleScope
 
@@ -109,7 +109,7 @@ desugarLiteral :: Nope.Literal -> CousCous.Expression
 desugarLiteral Nope.NoneLiteral = CousCous.NoneLiteral
 desugarLiteral (Nope.IntegerLiteral value) = CousCous.IntegerLiteral value
 
-desugarDeclaration :: VariableDeclaration -> CousCous.VariableDeclaration
+desugarDeclaration :: VariableDeclaration -> CousCous.Declaration
 desugarDeclaration (VariableDeclaration name declarationId) =
     CousCous.VariableDeclaration name declarationId
 desugarDeclaration (Builtin name) =

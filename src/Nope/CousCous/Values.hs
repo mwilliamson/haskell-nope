@@ -7,7 +7,7 @@ data Value =
     None |
     BooleanValue Bool |
     IntegerValue Integer |
-    Function String [Nodes.VariableDeclaration] [Nodes.VariableDeclaration] [Nodes.Statement] |
+    Function String [Nodes.Declaration] [Nodes.Declaration] [Nodes.Statement] |
     Print |
     Bool
 
