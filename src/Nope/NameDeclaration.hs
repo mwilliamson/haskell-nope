@@ -10,18 +10,12 @@ class CreatesScope a where
     declaredNames :: a -> [String]
 
 instance CreatesScope ParsedModule where
-    declaredNames = namesDeclaredInModule
+    declaredNames moduleNode =
+        namesDeclaredInStatements (Nodes.statements moduleNode)
 
 instance CreatesScope ParsedFunction where
-    declaredNames = namesDeclaredInFunction
-
-namesDeclaredInModule :: ParsedModule -> [String]
-namesDeclaredInModule moduleNode =
-    namesDeclaredInStatements (Nodes.statements moduleNode)
-
-namesDeclaredInFunction :: ParsedFunction -> [String]
-namesDeclaredInFunction function =
-    namesDeclaredInStatements (Nodes.functionBody function)
+    declaredNames function =
+        namesDeclaredInStatements (Nodes.functionBody function)
 
 namesDeclaredInStatements :: [ParsedStatement] -> [String]
 namesDeclaredInStatements statements =
