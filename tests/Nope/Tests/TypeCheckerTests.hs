@@ -30,6 +30,9 @@ typeCheckerTestSuite = testGroup "TypeCheckerTests"
                 environment = Map.singleton (decl "f") functionType
                 call = Nodes.Call (ref "f") []
             in (success IntType) @=? (infer environment call)
+        
+        , testCase "error if called value is not function" $
+            failure @=? (inferWithEmptyEnvironment (Nodes.Call Nodes.none []))
         ]
     ]
 
@@ -38,3 +41,4 @@ inferWithEmptyEnvironment = infer Map.empty
 
 
 success = Just
+failure = Nothing
