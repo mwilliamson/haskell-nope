@@ -1,18 +1,17 @@
 module Nope.Tests.CousCous.InterpreterTests (interpreterTestSuite) where
 
-import Data.Char (ord)
-
 import Test.Tasty
 import Test.Tasty.HUnit
 
 import qualified Nope.CousCous.Nodes as Nodes
 import qualified Nope.CousCous.Interpreter as Interpreter
+import Nope.Tests.Variables
 
 
 declaration = decl "x"
 reference = Nodes.VariableReference declaration
 
-decl [name] = Nodes.VariableDeclaration [name] (ord name)
+decl name = Nodes.VariableDeclaration name (declarationId name)
 ref name = Nodes.VariableReference (decl name)
 
 boolTestCase name expression expectedBoolValue =

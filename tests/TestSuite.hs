@@ -6,6 +6,7 @@ import Nope
 import Nope.Tests.ParsingTests
 import Nope.Tests.NameDeclarationTests
 import Nope.Tests.NameResolutionTests
+import Nope.Tests.TypeCheckerTests
 import Nope.Tests.DesugaringTests
 import Nope.Tests.CousCous.InterpreterTests
 import Nope.Tests.ExecutionTests
@@ -17,6 +18,7 @@ tests = testGroup "Tests" [
     parsingTestSuite,
     nameDeclarationTestSuite,
     nameResolutionTestSuite,
+    typeCheckerTestSuite,
     desugaringTestSuite,
     interpreterTestSuite,
     executionTestSuite

@@ -11,7 +11,7 @@ import qualified Nope.Nodes as Nodes
 data VariableDeclaration =
     VariableDeclaration String Int |
     Builtin String
-    deriving (Show, Eq)
+    deriving (Show, Eq, Ord)
 
 declarationName :: VariableDeclaration -> String
 declarationName (Builtin name) = name
