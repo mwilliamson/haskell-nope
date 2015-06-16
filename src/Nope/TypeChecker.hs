@@ -7,7 +7,8 @@ import Nope.Nodes
 
 data Type =
     NoneType |
-    IntType
+    IntType |
+    FunctionType [Type] Type
     
     deriving (Eq, Show)
 
@@ -18,7 +19,10 @@ infer :: Environment -> ResolvedExpression -> Maybe Type
 infer _ (Literal literal) = Just $ inferLiteral literal
 infer environment (VariableReference declaration) =
     Map.lookup declaration environment
-infer _ _ = Nothing
+infer environment (Call func _) =
+    case infer environment func of
+        Just (FunctionType _ returnType) -> Just returnType
+        _ -> Nothing
 
 inferLiteral :: Literal -> Type
 inferLiteral NoneLiteral = NoneType

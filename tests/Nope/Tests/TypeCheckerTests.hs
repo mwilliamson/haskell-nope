@@ -24,6 +24,12 @@ typeCheckerTestSuite = testGroup "TypeCheckerTests"
         
         , testCase "type of reference is type of variable in environment" $
             (success IntType) @=? (infer (Map.singleton (decl "x") IntType) (ref "x"))
+            
+        , testCase "type of function call is return type of function type" $
+            let functionType = FunctionType [] IntType
+                environment = Map.singleton (decl "f") functionType
+                call = Nodes.Call (ref "f") []
+            in (success IntType) @=? (infer environment call)
         ]
     ]
 
