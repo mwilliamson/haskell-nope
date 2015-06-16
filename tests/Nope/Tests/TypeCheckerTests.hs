@@ -32,13 +32,13 @@ typeCheckerTestSuite = testGroup "TypeCheckerTests"
             in (success IntType) @=? (infer environment call)
         
         , testCase "error if called value is not function" $
-            failure @=? (inferWithEmptyEnvironment (Nodes.Call Nodes.none []))
+            (failure $ UnexpectedValueTypeError "function" "NoneType") @=? (inferWithEmptyEnvironment (Nodes.Call Nodes.none []))
         ]
     ]
 
-inferWithEmptyEnvironment :: ResolvedExpression -> Maybe Type
+inferWithEmptyEnvironment :: ResolvedExpression -> Either TypeError Type
 inferWithEmptyEnvironment = infer Map.empty
 
 
-success = Just
-failure = Nothing
+success = Right
+failure = Left

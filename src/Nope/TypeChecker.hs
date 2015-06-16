@@ -1,4 +1,6 @@
-module Nope.TypeChecker (infer, Type(..), Environment) where
+module Nope.TypeChecker (infer, Type(..), Environment, TypeError(..)) where
+
+import Data.List (intercalate)
 
 import qualified Data.Map.Strict as Map
 
@@ -13,16 +15,42 @@ data Type =
     deriving (Eq, Show)
 
 
+describeType :: Type -> String
+describeType NoneType = "NoneType"
+describeType IntType = "int"
+describeType (FunctionType args returnType) =
+    (intercalate ", " (map describeType args)) ++ "-> " ++ (describeType returnType)
+
+
+data TypeError =
+    UnexpectedValueTypeError {
+        unexpectedValueTypeErrorExpectedType :: String,
+        unexpectedValueTypeErrorActualType :: String
+    } |
+    UnboundValueError
+    
+    deriving (Eq, Show)
+
+
 type Environment = Map.Map VariableDeclaration Type
 
-infer :: Environment -> ResolvedExpression -> Maybe Type
-infer _ (Literal literal) = Just $ inferLiteral literal
+infer :: Environment -> ResolvedExpression -> Either TypeError Type
+
+infer _ (Literal literal) = return $ inferLiteral literal
+
 infer environment (VariableReference declaration) =
-    Map.lookup declaration environment
-infer environment (Call func _) =
-    case infer environment func of
-        Just (FunctionType _ returnType) -> Just returnType
-        _ -> Nothing
+    case Map.lookup declaration environment of
+        Just referenceType -> return referenceType
+        Nothing -> Left UnboundValueError
+    
+infer environment (Call func _) = do
+    functionType <- infer environment func
+    case functionType of
+        FunctionType _ returnType -> Right returnType
+        _ -> Left $ UnexpectedValueTypeError {
+            unexpectedValueTypeErrorExpectedType = "function",
+            unexpectedValueTypeErrorActualType = (describeType functionType)
+        }
 
 inferLiteral :: Literal -> Type
 inferLiteral NoneLiteral = NoneType
